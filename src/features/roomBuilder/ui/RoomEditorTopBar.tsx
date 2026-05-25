@@ -30,6 +30,7 @@ export const RoomEditorTopBar: React.FC = () => {
             onClick={() => {
               setRoomEditorMode('build');
               if (brushShape === 'point') setBrushShape('line');
+              useStore.getState().setIsFirstPerson(false);
             }}
             className={`w-12 h-10 rounded-full flex items-center justify-center transition-colors ${roomEditorMode === 'build' ? 'bg-white text-black' : 'text-white'}`}
           >
@@ -39,6 +40,7 @@ export const RoomEditorTopBar: React.FC = () => {
             onClick={() => {
               setRoomEditorMode('voxel');
               setBrushShape('point'); // Force point brush for voxel mode
+              useStore.getState().setIsFirstPerson(true);
             }}
             className={`w-12 h-10 rounded-full flex items-center justify-center transition-colors ${(roomEditorMode === 'voxel') ? 'bg-white text-black' : 'text-white'}`}
             title="Первое лицо: точечная стройка"

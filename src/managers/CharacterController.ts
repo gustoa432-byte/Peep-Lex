@@ -95,8 +95,9 @@ export class CoreCharacterController {
 
   private update(dt: number) {
     const store = useStore.getState();
-    const { appMode, isFirstPerson, cameraSpeed, isCrouching, jumpTrigger, roomObjects, podiumPosition, devSettings, isPlayingAnimation, isPlayingLoops, isAnimationMenuOpen, editingLoopId } = store;
+    const { appMode, roomEditorMode, isFirstPerson, cameraSpeed, isCrouching, jumpTrigger, roomObjects, podiumPosition, devSettings, isPlayingAnimation, isPlayingLoops, isAnimationMenuOpen, editingLoopId } = store;
     const { move, look } = inputState;
+    const isRoomOrVoxel = appMode === 'room' || (appMode === 'roomEditor' && roomEditorMode === 'voxel');
 
     // EDITOR KINEMATICS
     if (appMode === 'editor') {
@@ -117,9 +118,6 @@ export class CoreCharacterController {
         this.animation.isCrouching = isCrouching;
         return;
     }
-
-    // Body/Room Editor - character is still or simple
-    if (appMode === 'roomEditor') return;
 
     // Send updated objects to worker if they changed
     if (this.currentRoomObjectsRef !== roomObjects) {
@@ -154,13 +152,24 @@ export class CoreCharacterController {
 
             if (!incremental) {
                 this.worker.postMessage({ type: 'SET_BLOCKS', payload: this.currentRoomObjectsRef });
-                this.lastWorkerRequestPos.set(9999, 9999, 9999); // force re-fetch
             }
+            
+            // ALWAYS force a re-fetch of nearby chunks so building shows up in real-time
+            this.lastWorkerRequestPos.set(9999, 9999, 9999);
         }
     }
 
+    // Body/Room Editor - character is still or simple
+    if (appMode === 'roomEditor' && roomEditorMode !== 'voxel') {
+         if (this.worker && this.isWorkerReady && roomObjects.length > 0) {
+             // In macro mode, we need the whole room loaded. We'll ask the worker.
+             this.worker.postMessage({ type: 'GET_NEARBY', payload: { x: podiumPosition[0], z: podiumPosition[2], radius: 100, reqId: this.reqIdCounters++ } });
+         }
+         return;
+    }
+
     // Ask worker for nearby blocks
-    if (appMode === 'room' && this.worker) {
+    if ((appMode === 'room' || (appMode === 'roomEditor' && roomEditorMode === 'voxel')) && this.worker) {
         const dx = this.position.x - this.lastWorkerRequestPos.x;
         const dz = this.position.z - this.lastWorkerRequestPos.z;
         if (dx * dx + dz * dz > 16) { // Request updates every ~4 meters moved
@@ -191,7 +200,7 @@ export class CoreCharacterController {
     let currentFloorY = -2.0;
     if (appMode === 'world') {
       currentFloorY = 0;
-    } else if (appMode === 'room') {
+    } else if (isRoomOrVoxel) {
       const px = this.position.x - podiumPosition[0];
       const pz = this.position.z - podiumPosition[2];
       const distSq = px * px + pz * pz;
@@ -253,13 +262,13 @@ export class CoreCharacterController {
 
       this.position.x += moveDir.x * speed;
       
-      if (appMode === 'room') {
+      if (isRoomOrVoxel) {
         if (this.checkCollisionX(collisionBlocks)) this.position.x = prevX;
       }
 
       this.position.z += moveDir.z * speed;
       
-      if (appMode === 'room') {
+      if (isRoomOrVoxel) {
         if (this.checkCollisionZ(collisionBlocks)) this.position.z = prevZ;
       }
 
@@ -276,7 +285,7 @@ export class CoreCharacterController {
     this.updateAnimations(dt, isJumping, isMoving, rawMag);
 
     // 6. Camera transform
-    this.updateCamera(dt, isFirstPerson, appMode, collisionBlocks, devSettings);
+    this.updateCamera(dt, isFirstPerson, isRoomOrVoxel, collisionBlocks, devSettings);
 
     // 7. Multiplayer Sync
     const nowSync = Date.now();
@@ -363,7 +372,7 @@ export class CoreCharacterController {
     }
   }
 
-  private updateCamera(dt: number, isFirstPerson: boolean, appMode: string, roomObjects: any[], devSettings: any) {
+  private updateCamera(dt: number, isFirstPerson: boolean, isRoomOrVoxel: boolean, roomObjects: any[], devSettings: any) {
     const targetPos = this.position.clone();
     targetPos.y += 8.1; // Head height roughly
 
@@ -375,11 +384,11 @@ export class CoreCharacterController {
         const focusPoint = targetPos.clone().add(lookDir);
         this.cameraQuaternion.setFromRotationMatrix(new THREE.Matrix4().lookAt(this.cameraPosition, focusPoint, UP_VECTOR));
     } else {
-        const targetHeight = appMode === 'room' ? (devSettings.roomCameraHeight ?? 8.1) : 8.1;
-        const targetDistance = appMode === 'room' ? (devSettings.roomCameraDistance ?? 26) : 26;
+        const targetHeight = isRoomOrVoxel ? (devSettings.roomCameraHeight ?? 8.1) : 8.1;
+        const targetDistance = isRoomOrVoxel ? (devSettings.roomCameraDistance ?? 26) : 26;
         
         let offset;
-        if (appMode === 'room') {
+        if (isRoomOrVoxel) {
             const currentPitch = this.pitch + (devSettings.roomCameraPitch ?? -0.220796);
             offset = new THREE.Vector3(0, Math.sin(currentPitch) * targetDistance, Math.cos(currentPitch) * targetDistance);
         } else {
@@ -391,7 +400,7 @@ export class CoreCharacterController {
         let finalPos = targetPos.clone().add(offset);
         
         // Simple AABB collision for Camera
-        if (appMode === 'room') {
+        if (isRoomOrVoxel) {
             const dir = finalPos.clone().sub(targetPos).normalize();
             let maxDist = offset.length();
             let minHitDist = maxDist;
