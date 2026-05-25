@@ -18,6 +18,9 @@ export const createRoomEditorSlice = (set: any) => ({
   roomEditorHistory: [[]] as RoomObject[][],
   roomEditorHistoryIndex: 0,
   
+  roomCameraResetTrigger: 0,
+  triggerRoomCameraReset: () => set((state: AppState) => ({ roomCameraResetTrigger: state.roomCameraResetTrigger + 1 })),
+
   commitRoomEditorHistory: () => set((state: AppState) => {
     const lastHistory = state.roomEditorHistory[state.roomEditorHistoryIndex] || [];
     // Only push if there's a difference in length OR the objects are different (checking IDs for speed)

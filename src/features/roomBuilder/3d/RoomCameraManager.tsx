@@ -21,6 +21,42 @@ export const RoomCameraManager = () => {
     const shouldEnableControls = appMode === 'roomEditor' && (roomEditorMode === 'view' || roomEditorMode === 'move' || roomEditorMode === 'build');
     const isEnabled = shouldEnableControls && !isBuildingActive;
 
+    const isMacroRef = React.useRef<boolean>(isMacro);
+    isMacroRef.current = isMacro;
+    const roomCameraResetTrigger = useStore(state => state.roomCameraResetTrigger);
+
+    React.useEffect(() => {
+        const controls = controlsRef.current;
+        if (!controls) return;
+        const onChange = () => {
+             // Only save camera state if we are truly in macro mode AND controls are enabled
+             // This prevents other systems (like CharacterController in voxel mode) from accidentally saving their position here
+             if (isMacroRef.current && controls.enabled) {
+                 savedBuildState.current = {
+                     position: camera.position.clone(),
+                     target: controls.target.clone()
+                 };
+             }
+        };
+        controls.addEventListener('change', onChange);
+        return () => controls.removeEventListener('change', onChange);
+    }, [camera]);
+
+    React.useEffect(() => {
+        const controls = controlsRef.current;
+        if (!controls || !isMacro) return;
+
+        if (roomCameraResetTrigger > 0) {
+            camera.position.set(0, 80, 80);
+            controls.target.set(0, 0, 0);
+            savedBuildState.current = {
+                position: camera.position.clone(),
+                target: controls.target.clone()
+            };
+            controls.update();
+        }
+    }, [roomCameraResetTrigger, isMacro, camera]);
+
     React.useEffect(() => {
         const controls = controlsRef.current;
         if (!controls) return;
@@ -40,13 +76,6 @@ export const RoomCameraManager = () => {
              controls.update();
         } else {
              // We are leaving macro mode for room or voxel.
-             // Save current builder camera position so we can restore it later.
-             if (wasMacroRef.current) {
-                 savedBuildState.current = {
-                     position: camera.position.clone(),
-                     target: controls.target.clone()
-                 };
-             }
              controls.enabled = false;
         }
         

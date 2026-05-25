@@ -68,9 +68,8 @@ export const VoxelJoysticks: React.FC<{
     setIsMoveActive(false);
   };
 
-  // Right Joystick Logic (Camera)
+  // Right Joystick Logic (Camera) Invisible
   const lookJoystickRef = useRef<HTMLDivElement>(null);
-  const lookKnobRef = useRef<HTMLDivElement>(null);
   const [isLookActive, setIsLookActive] = useState(false);
   const lookStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
 
@@ -105,9 +104,6 @@ export const VoxelJoysticks: React.FC<{
       dy = (dy / distance) * maxRadius;
     }
     
-    if (lookKnobRef.current) {
-      lookKnobRef.current.style.transform = `translate(${dx}px, ${dy}px)`;
-    }
     inputState.look.x = dx / maxRadius;
     inputState.look.y = dy / maxRadius;
   };
@@ -134,9 +130,6 @@ export const VoxelJoysticks: React.FC<{
     }
     
     lookStartRef.current = null;
-    if (lookKnobRef.current) {
-      lookKnobRef.current.style.transform = `translate(0px, 0px)`;
-    }
     inputState.look.x = 0;
     inputState.look.y = 0;
     setIsLookActive(false);
@@ -155,7 +148,7 @@ export const VoxelJoysticks: React.FC<{
     <>
       {/* Left Joystick - Movement */}
       <div 
-        className={`absolute bottom-8 left-4 w-32 h-32 bg-black/10 border-[3px] border-black/50 rounded-full pointer-events-auto touch-none flex items-center justify-center p-0 m-0 transition-opacity duration-300 ${isMoveActive ? 'opacity-5' : 'opacity-100'}`}
+        className={`fixed bottom-8 left-4 w-32 h-32 bg-black/10 border-[3px] border-black/50 rounded-full pointer-events-auto touch-none flex items-center justify-center p-0 m-0 transition-opacity duration-300 ${isMoveActive ? 'opacity-5' : 'opacity-100'} z-50`}
         ref={joystickRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -169,21 +162,15 @@ export const VoxelJoysticks: React.FC<{
         />
       </div>
 
-      {/* Right Joystick - Camera */}
+      {/* Invisible Right Half Joystick Area for Camera Look */}
       <div 
-        className={`absolute bottom-8 right-4 w-32 h-32 bg-black/10 border-[3px] border-black/50 rounded-full pointer-events-auto touch-none flex items-center justify-center p-0 m-0 transition-opacity duration-300 ${isLookActive ? 'opacity-5' : 'opacity-100'}`}
+        className="fixed top-0 right-0 w-1/2 h-full pointer-events-auto touch-none z-[49]"
         ref={lookJoystickRef}
         onPointerDown={handleLookPointerDown}
         onPointerMove={handleLookPointerMove}
         onPointerUp={handleLookPointerUp}
         onPointerCancel={handleLookPointerUp}
-      >
-        <div 
-          ref={lookKnobRef}
-          className="w-12 h-12 bg-white rounded-full shadow-[0_4px_0_0_rgba(0,0,0,0.3)] transition-transform duration-75 pointer-events-none"
-          style={{ transform: `translate(0px, 0px)` }}
-        />
-      </div>
+      />
     </>
   );
 };

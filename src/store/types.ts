@@ -313,6 +313,8 @@ export interface AppState {
 
   roomEditorHistory: RoomObject[][];
   roomEditorHistoryIndex: number;
+  roomCameraResetTrigger: number;
+  triggerRoomCameraReset: () => void;
   commitRoomEditorHistory: () => void;
   pushRoomEditorHistory: (objects: RoomObject[]) => void;
   undoRoomEditorHistory: () => void;
