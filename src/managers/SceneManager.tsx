@@ -15,7 +15,7 @@ export const SceneManager: React.FC = () => {
   
   switch (appMode) {
     case 'world':
-      return <WorldScene />;
+      return null; // World is under development (technical break)
     case 'room':
     case 'roomEditor':
       return <RoomScene />;
