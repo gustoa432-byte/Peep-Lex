@@ -1,0 +1,107 @@
+import { CharacterConfig, DevSettings } from './types';
+
+export const defaultCharacterConfig: CharacterConfig = {
+  mainColor: '#F4C430', // Yellow
+  legColor: '#E34234', // Red
+  headSize: 0.65,
+  torsoRadius: 0.75,
+  torsoLength: 1.4,
+  armLength: 1.1,
+  armThickness: 0.18,
+  legLength: 1.3,
+  legThickness: 0.28,
+  shoulderSpread: 0.85,
+  hipSpread: 0.35,
+};
+
+export const defaultDevSettings: DevSettings = {
+  cameraDistance: 26,
+  cameraHeight: 8.1,
+  cameraPitch: -0.220796326794897,
+  roomCameraDistance: 26,
+  roomCameraHeight: 8.1,
+  roomCameraPitch: -0.220796326794897,
+
+  worldCameraDistance: 21,
+  worldCameraHeight: 3.6,
+  worldCameraPitch: -0.220796326794897,
+  rootPositionY: 0,
+  rootPositionX: 0,
+  rootPositionZ: 0,
+  rootRotationY: 0,
+  spineAngleX: 0,
+  spineAngleY: 0,
+  spineAngleZ: 0,
+  neckAngleX: 0,
+  neckAngleY: 0,
+  neckAngleZ: 0,
+  leftShoulderAngleX: 0,
+  leftShoulderAngleY: 0,
+  leftShoulderAngleZ: 0,
+  rightShoulderAngleX: 0,
+  rightShoulderAngleY: 0,
+  rightShoulderAngleZ: 0,
+  leftElbowAngleX: 0,
+  leftElbowAngleY: 0,
+  leftElbowAngleZ: 0,
+  rightElbowAngleX: 0,
+  rightElbowAngleY: 0,
+  rightElbowAngleZ: 0,
+  leftHipAngleX: 0,
+  leftHipAngleY: 0,
+  leftHipAngleZ: 0,
+  rightHipAngleX: 0,
+  rightHipAngleY: 0,
+  rightHipAngleZ: 0,
+  leftKneeAngleX: 0,
+  leftKneeAngleY: 0,
+  leftKneeAngleZ: 0,
+  rightKneeAngleX: 0,
+  rightKneeAngleY: 0,
+  rightKneeAngleZ: 0,
+
+  leftWristAngleX: 0,
+  leftWristAngleY: 0,
+  leftWristAngleZ: 0,
+  rightWristAngleX: 0,
+  rightWristAngleY: 0,
+  rightWristAngleZ: 0,
+
+  // Light Settings Defaults
+  spotLightPosX: -11.2,
+  spotLightPosY: 27.3,
+  spotLightPosZ: 360,
+  spotLightAngle: 1.57,
+  spotLightPenumbra: 0,
+  spotLightIntensity: 1.3,
+
+  rimPinkPosX: -360,
+  rimPinkPosY: -360,
+  rimPinkPosZ: -360,
+  rimPinkIntensity: 9.3,
+
+  rimCyanPosX: 360,
+  rimCyanPosY: 360,
+  rimCyanPosZ: 360,
+  rimCyanIntensity: 5.7,
+
+  backFillPosX: 37,
+  backFillPosY: -298.9,
+  backFillPosZ: 159.1,
+  backFillIntensity: 1.6,
+
+  ambientIntensity: 1,
+
+  ambientMode: 0,
+  rimPinkMode: 0,
+  rimCyanMode: 0,
+  spotMode: 0,
+
+  // Default Effects
+  emotion: 'smile',
+  effectHalo: false,
+  effectSkull: false,
+  effectGlitch: false,
+  effectHearts: false,
+  effectSparkles: false,
+};
