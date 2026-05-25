@@ -206,10 +206,41 @@ const VoxelToolsGroup = memo(() => {
   const setRoomSelectedTool = useStore(state => state.setRoomSelectedTool);
   const roomSelectedStamp = useStore(state => state.roomSelectedStamp);
   const setRoomSelectedStamp = useStore(state => state.setRoomSelectedStamp);
+  const roomBlockSize = useStore(state => state.roomBlockSize);
+  const setRoomBlockSize = useStore(state => state.setRoomBlockSize);
   const [isRadialMenuOpen, setRadialMenuOpen] = useState(false);
+  const [isSizeMenuOpen, setSizeMenuOpen] = useState(false);
 
   return (
-    <div className="absolute bottom-48 right-12 flex flex-col gap-4 pointer-events-auto">
+    <div className="absolute bottom-48 right-12 flex flex-col gap-4 pointer-events-auto items-center">
+       {isSizeMenuOpen && (
+         <div className="bg-black/80 rounded-full p-2 flex flex-col gap-2 border border-white/10 shadow-lg">
+            {[4, 2, 1].map((s) => (
+              <button
+                key={`vox_bsize_${s}`}
+                onClick={() => {
+                  setRoomBlockSize(s);
+                  setSizeMenuOpen(false);
+                }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs active:scale-95 transition-colors ${
+                  roomBlockSize === s ? 'bg-white text-black' : 'text-white hover:bg-black/80'
+                }`}
+                title={`Размер блока: ${s}`}
+              >
+                <Box size={s === 4 ? 26 : s === 2 ? 18 : 12} strokeWidth={roomBlockSize === s ? 3 : 2} />
+              </button>
+            ))}
+         </div>
+       )}
+
+       <button
+          onClick={() => setSizeMenuOpen(!isSizeMenuOpen)}
+          className={`w-14 h-14 rounded-full flex items-center justify-center bg-black/95 text-white ${isSizeMenuOpen ? 'border-2 border-white' : 'border border-white/10'}`}
+          title="Выбрать размер"
+       >
+          <Box size={roomBlockSize === 4 ? 26 : roomBlockSize === 2 ? 18 : 12} strokeWidth={3} />
+       </button>
+
        <button
           onClick={() => setRoomSelectedTool('eraser')}
           className={`w-14 h-14 rounded-full flex items-center justify-center bg-black/95 ${roomSelectedTool === 'eraser' ? 'border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border border-white/10'}`}
@@ -266,7 +297,7 @@ export const RoomEditorOverlay: React.FC = memo(() => {
       <RoomEditorTopBar />
       <div className="flex-1" />
 
-      {(roomEditorMode === 'build' || roomEditorMode === 'voxel') && (
+      {roomEditorMode === 'build' && (
         <>
           <LeftTools />
           <RightTools onClearClick={() => setShowClearConfirm(true)} />
