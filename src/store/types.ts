@@ -315,6 +315,8 @@ export interface AppState {
   roomEditorHistoryIndex: number;
   roomCameraResetTrigger: number;
   triggerRoomCameraReset: () => void;
+  macroCameraState: { position: [number, number, number], target: [number, number, number] } | null;
+  setMacroCameraState: (state: { position: [number, number, number], target: [number, number, number] } | null) => void;
   commitRoomEditorHistory: () => void;
   pushRoomEditorHistory: (objects: RoomObject[]) => void;
   undoRoomEditorHistory: () => void;

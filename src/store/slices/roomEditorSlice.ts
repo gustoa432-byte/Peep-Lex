@@ -21,6 +21,9 @@ export const createRoomEditorSlice = (set: any) => ({
   roomCameraResetTrigger: 0,
   triggerRoomCameraReset: () => set((state: AppState) => ({ roomCameraResetTrigger: state.roomCameraResetTrigger + 1 })),
 
+  macroCameraState: null as { position: [number, number, number], target: [number, number, number] } | null,
+  setMacroCameraState: (val: { position: [number, number, number], target: [number, number, number] } | null) => set({ macroCameraState: val }),
+
   commitRoomEditorHistory: () => set((state: AppState) => {
     const lastHistory = state.roomEditorHistory[state.roomEditorHistoryIndex] || [];
     // Only push if there's a difference in length OR the objects are different (checking IDs for speed)

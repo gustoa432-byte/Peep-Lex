@@ -310,10 +310,8 @@ export const RoomEditorOverlay: React.FC = memo(() => {
             onClick={() => {
               if (roomEditorMode === 'view' || roomEditorMode === 'move') {
                 setRoomEditorMode('build');
-                useStore.getState().triggerRoomCameraReset();
               } else {
                 setRoomEditorMode('view');
-                useStore.getState().triggerRoomCameraReset();
               }
             }}
             className={`w-14 h-14 rounded-full flex items-center justify-center transition-all bg-black/95 border ${

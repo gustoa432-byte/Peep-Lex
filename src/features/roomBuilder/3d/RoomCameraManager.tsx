@@ -10,7 +10,6 @@ export const RoomCameraManager = () => {
     const roomEditorMode = useStore((state) => state.roomEditorMode);
 
     const controlsRef = React.useRef<any>(null);
-    const savedBuildState = React.useRef<{ position: THREE.Vector3, target: THREE.Vector3 } | null>(null);
     const wasMacroRef = React.useRef<boolean>(false);
 
     const isBuildingActive = useStore((state) => state.isBuildingActive);
@@ -29,13 +28,12 @@ export const RoomCameraManager = () => {
         const controls = controlsRef.current;
         if (!controls) return;
         const onChange = () => {
-             // Only save camera state if we are truly in macro mode AND controls are enabled
-             // This prevents other systems (like CharacterController in voxel mode) from accidentally saving their position here
              if (isMacroRef.current && controls.enabled) {
-                 savedBuildState.current = {
-                     position: camera.position.clone(),
-                     target: controls.target.clone()
-                 };
+                 // Update the global store directly without triggering re-renders here if we use getState
+                 useStore.getState().setMacroCameraState({
+                     position: [camera.position.x, camera.position.y, camera.position.z],
+                     target: [controls.target.x, controls.target.y, controls.target.z]
+                 });
              }
         };
         controls.addEventListener('change', onChange);
@@ -49,10 +47,10 @@ export const RoomCameraManager = () => {
         if (roomCameraResetTrigger > 0) {
             camera.position.set(0, 80, 80);
             controls.target.set(0, 0, 0);
-            savedBuildState.current = {
-                position: camera.position.clone(),
-                target: controls.target.clone()
-            };
+            useStore.getState().setMacroCameraState({
+                position: [0, 80, 80],
+                target: [0, 0, 0]
+            });
             controls.update();
         }
     }, [roomCameraResetTrigger, isMacro, camera]);
@@ -62,11 +60,12 @@ export const RoomCameraManager = () => {
         if (!controls) return;
 
         if (isMacro) {
-             // Restore or set default builder camera ONLY when entering macro mode from another mode
+             // Restore builder camera ONLY when entering macro mode from another mode
              if (!wasMacroRef.current) {
-                 if (savedBuildState.current) {
-                     camera.position.copy(savedBuildState.current.position);
-                     controls.target.copy(savedBuildState.current.target);
+                 const storedState = useStore.getState().macroCameraState;
+                 if (storedState) {
+                     camera.position.set(...storedState.position);
+                     controls.target.set(...storedState.target);
                  } else {
                      camera.position.set(0, 80, 80);
                      controls.target.set(0, 0, 0);

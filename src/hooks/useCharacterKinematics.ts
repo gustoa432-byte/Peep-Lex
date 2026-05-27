@@ -77,9 +77,12 @@ export const useCharacterKinematics = () => {
 
     // 2. Sync Camera
     const store = useStore.getState();
-    const { appMode: currentAppMode } = store;
+    const { appMode: currentAppMode, roomEditorMode } = store;
 
-    if (state.controls && currentAppMode !== 'editor') {
+    // Is it a mode with fully independent orbital camera?
+    const isOrbitMode = currentAppMode === 'editor' || (currentAppMode === 'roomEditor' && roomEditorMode !== 'voxel');
+
+    if (state.controls && !isOrbitMode) {
       (state.controls as any).enabled = false; 
     }
 
@@ -96,7 +99,7 @@ export const useCharacterKinematics = () => {
             controls.minPolarAngle = 0;
             controls.update();
         }
-    } else {
+    } else if (!isOrbitMode) {
         camera.position.copy(cameraPosition);
         camera.quaternion.copy(cameraQuaternion);
     }
