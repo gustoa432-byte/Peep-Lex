@@ -16,8 +16,8 @@ export const RoomCameraManager = () => {
 
     const isMacro = appMode === 'roomEditor' && roomEditorMode !== 'voxel';
     const isBuildMode = roomEditorMode === 'build';
-    // Camera is fully usable by default in view/move/build
-    const shouldEnableControls = appMode === 'roomEditor' && (roomEditorMode === 'view' || roomEditorMode === 'move' || roomEditorMode === 'build');
+    // Camera is ONLY fully usable in view/move, not in build mode!
+    const shouldEnableControls = appMode === 'roomEditor' && (roomEditorMode === 'view' || roomEditorMode === 'move');
     const isEnabled = shouldEnableControls && !isBuildingActive;
 
     const isMacroRef = React.useRef<boolean>(isMacro);

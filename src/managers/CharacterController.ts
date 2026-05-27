@@ -33,6 +33,7 @@ export class CoreCharacterController {
   private animationFrameId = 0;
 
   private floorY = 0;
+  private lastAppMode = 'editor';
 
   // Web Worker for Grid Collisions
   private worker: Worker | null = null;
@@ -96,6 +97,16 @@ export class CoreCharacterController {
   private update(dt: number) {
     const store = useStore.getState();
     const { appMode, roomEditorMode, isFirstPerson, cameraSpeed, isCrouching, jumpTrigger, roomObjects, podiumPosition, devSettings, isPlayingAnimation, isPlayingLoops, isAnimationMenuOpen, editingLoopId } = store;
+    
+    if (appMode !== this.lastAppMode) {
+      if ((appMode === 'room' || appMode === 'world' || appMode === 'parkour') && this.lastAppMode === 'editor') {
+        this.yaw = 0;
+        this.pitch = 0.2;
+        this.visualQuaternion.setFromAxisAngle(UP_VECTOR, Math.PI);
+      }
+      this.lastAppMode = appMode;
+    }
+    
     const { move, look } = inputState;
     const isRoomOrVoxel = appMode === 'room' || (appMode === 'roomEditor' && roomEditorMode === 'voxel');
 
@@ -285,7 +296,7 @@ export class CoreCharacterController {
     this.updateAnimations(dt, isJumping, isMoving, rawMag);
 
     // 6. Camera transform
-    this.updateCamera(dt, isFirstPerson, isRoomOrVoxel, collisionBlocks, devSettings);
+    this.updateCamera(dt, isFirstPerson, isRoomOrVoxel, roomEditorMode, collisionBlocks, devSettings);
 
     // 7. Multiplayer Sync
     const nowSync = Date.now();
@@ -372,9 +383,14 @@ export class CoreCharacterController {
     }
   }
 
-  private updateCamera(dt: number, isFirstPerson: boolean, isRoomOrVoxel: boolean, roomObjects: any[], devSettings: any) {
+  private updateCamera(dt: number, isFirstPerson: boolean, isRoomOrVoxel: boolean, roomEditorMode: string | undefined, roomObjects: any[], devSettings: any) {
     const targetPos = this.position.clone();
-    targetPos.y += 8.1; // Head height roughly
+    
+    let headHeight = 8.1;
+    if (isFirstPerson && isRoomOrVoxel && roomEditorMode === 'voxel') {
+        headHeight = 4.0;
+    }
+    targetPos.y += headHeight;
 
     if (isFirstPerson) {
         const lookQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ'));
