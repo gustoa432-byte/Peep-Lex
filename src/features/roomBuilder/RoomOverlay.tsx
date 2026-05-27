@@ -51,7 +51,7 @@ const FlexPickerOverlay = memo(({
 });
 
 export const RoomOverlay = () => {
-  const setAppMode = useStore(state => state.setAppMode);
+  const requestAppMode = useStore(state => state.requestAppMode);
   const triggerJump = useStore(state => state.triggerJump);
   const toggleCrouch = useStore(state => state.toggleCrouch);
   const showStats = useStore(state => state.showStats);
@@ -210,7 +210,7 @@ export const RoomOverlay = () => {
             onClick={() => {
               inputState.move.x = 0;
               inputState.move.y = 0;
-              setAppMode('editor');
+              requestAppMode('editor');
             }}
             className="flex items-center justify-center w-12 h-12 bg-[#111] rounded-[16px] text-white border-[3px] border-black shadow-[0_4px_0_0_rgba(0,0,0,1)] hover:bg-[#222] active:translate-y-1 active:shadow-none transition-all"
           >
@@ -250,7 +250,7 @@ export const RoomOverlay = () => {
       <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-auto flex flex-row-reverse items-center justify-end gap-4">
         <button 
           onClick={() => {
-            setAppMode('roomEditor');
+            requestAppMode('roomEditor');
             useStore.getState().setRoomEditorMode('build');
           }}
           className="w-16 h-16 flex items-center justify-center rounded-[20px] border-[3px] border-black transition-all active:translate-y-1 active:shadow-none shrink-0 bg-white text-black shadow-[0_4px_0_0_rgba(0,0,0,1)] hover:bg-gray-100"

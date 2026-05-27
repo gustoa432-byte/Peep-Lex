@@ -4,7 +4,7 @@ import { LogOut, Wrench } from 'lucide-react';
 import { vibrate } from '../../../lib/haptics';
 
 export const WorldOverlay: React.FC = () => {
-  const setAppMode = useStore(state => state.setAppMode);
+  const requestAppMode = useStore(state => state.requestAppMode);
 
   return (
     <div className="absolute inset-0 pointer-events-auto z-50 flex flex-col items-center justify-center bg-black/95 text-white">
@@ -18,7 +18,7 @@ export const WorldOverlay: React.FC = () => {
         <button 
           onClick={() => {
             vibrate(10);
-            setAppMode('editor');
+            requestAppMode('editor');
           }}
           className="flex items-center gap-2 px-6 py-3 bg-orange-500 rounded-full text-white font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(249,115,22,0.4)] hover:bg-orange-600 transition-colors"
         >

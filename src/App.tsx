@@ -5,6 +5,7 @@
 
 import React, { Component, ReactNode, useEffect, useRef, useState } from 'react';
 import { SceneViewer } from './components/3d/SceneViewer';
+import { ModeTransitionOverlay } from './components/ui/ModeTransitionOverlay';
 import { Diamond, Flame } from 'lucide-react';
 import { useStore } from './store/useStore';
 import { BodyEditorOverlay } from './features/characterCustomization/ui/BodyEditorOverlay';
@@ -108,6 +109,8 @@ function App() {
       <main className="flex-1 relative">
         <ErrorBoundary><SceneViewer /></ErrorBoundary>
       </main>
+
+      <ModeTransitionOverlay />
 
       {/* Top Bar: Currencies (Hidden when customizing, animating or in world mode) */}
       <div className={`absolute top-8 left-0 right-0 px-6 flex justify-between items-start z-40 pointer-events-auto transition-opacity duration-300 ${(isBodyEditorOpen || isPlayingAnimation || isPlayingLoops || isAnimationMenuOpen || isProfileMenuOpen || appMode === 'world' || appMode === 'parkour' || appMode === 'room' || appMode === 'roomEditor') ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>

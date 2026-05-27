@@ -211,6 +211,10 @@ export interface AppState {
   // App Mode
   appMode: AppMode;
   setAppMode: (mode: AppMode) => void;
+  requestAppMode: (mode: AppMode) => void;
+  transitionState: 'idle' | 'in' | 'out';
+  transitionTargetMode: AppMode | null;
+  setTransitionState: (state: 'idle' | 'in' | 'out') => void;
 
   // Economy & Profile
   profile: UserProfile | null;

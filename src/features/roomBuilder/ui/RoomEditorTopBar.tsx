@@ -3,7 +3,7 @@ import { useStore } from '../../../store/useStore';
 import { ArrowLeft, Hammer, Eye, Box, Undo2, Redo2 } from 'lucide-react';
 
 export const RoomEditorTopBar: React.FC = () => {
-  const setAppMode = useStore(state => state.setAppMode);
+  const requestAppMode = useStore(state => state.requestAppMode);
   const roomEditorMode = useStore(state => state.roomEditorMode);
   const setRoomEditorMode = useStore(state => state.setRoomEditorMode);
   const brushShape = useStore(state => state.brushShape);
@@ -19,7 +19,7 @@ export const RoomEditorTopBar: React.FC = () => {
       {/* Left: Back & Modes */}
       <div className="flex items-center gap-4 pointer-events-auto">
         <button 
-          onClick={() => setAppMode('room')}
+          onClick={() => requestAppMode('room')}
           className="w-12 h-12 rounded-full bg-black/95 flex items-center justify-center text-white active:scale-95 transition-transform border border-white/10"
         >
           <ArrowLeft size={24} />

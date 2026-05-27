@@ -64,7 +64,7 @@ export const ArcMenu = memo(() => {
   const isPlayingAnimation = useStore(state => state.isPlayingAnimation);
   const isPlayingLoops = useStore(state => state.isPlayingLoops);
   const appMode = useStore(state => state.appMode);
-  const setAppMode = useStore(state => state.setAppMode);
+  const requestAppMode = useStore(state => state.requestAppMode);
 
   if (isBodyEditorOpen || isPlayingAnimation || isPlayingLoops || appMode === 'parkour' || isProfileMenuOpen) return null;
 
@@ -73,7 +73,7 @@ export const ArcMenu = memo(() => {
       <div className="relative w-full h-full">
         {/* Left Side */}
         <MetallicButton icon={Play} x={-80} y={60} onClick={() => setIsAnimationMenuOpen(!isAnimationMenuOpen)} />
-        <MetallicButton icon={DoorOpen} x={-140} y={10} onClick={() => setAppMode('room')} />
+        <MetallicButton icon={DoorOpen} x={-140} y={10} onClick={() => requestAppMode('room')} />
         
         {/* Center */}
         <MetallicButton icon={Smile} size="lg" x={0} y={0} onClick={() => {
@@ -84,7 +84,7 @@ export const ArcMenu = memo(() => {
         {/* Right Side */}
         <MetallicButton icon={Star} x={80} y={60} iconScale={0.85} onClick={() => setIsProfileMenuOpen(true)} />
         
-        <MetallicButton icon={Globe} x={140} y={10} onClick={() => setAppMode('world')} />
+        <MetallicButton icon={Globe} x={140} y={10} onClick={() => requestAppMode('world')} />
       </div>
     </div>
   );
