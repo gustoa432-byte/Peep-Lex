@@ -108,7 +108,7 @@ export const useCharacterKinematics = () => {
     const { isPlayingAnimation, isPlayingLoops, isAnimationMenuOpen, editingLoopId, devSettings, podiumPosition } = store;
     const isMainHub = !isAnimationMenuOpen && !isPlayingLoops && editingLoopId === null;
     const activeSettings = (isPlayingAnimation || isPlayingLoops) ? activePoseRef.current : devSettings;
-    const currentDevSettings = (currentAppMode === 'editor' && isMainHub) ? defaultDevSettings : activeSettings;
+    const currentDevSettings = (currentAppMode === 'editor' && !isMainHub) ? activeSettings : defaultDevSettings;
 
     // Apply procedural overrides if moving
     const overrides = (animation.isMoving || animation.leftHipX !== 0) ? {

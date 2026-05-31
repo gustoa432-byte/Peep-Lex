@@ -221,7 +221,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
       {/* Дальняя зона LOD */}
       {lod === 'far' && mergedGeometry && (
         <mesh geometry={mergedGeometry} castShadow receiveShadow>
-          <meshLambertMaterial vertexColors={true} />
+          <PlasticMaterial color="#ffffff" hasBlockOutline={false} outlineThickness={0} vertexColors={true} />
         </mesh>
       )}
     </group>

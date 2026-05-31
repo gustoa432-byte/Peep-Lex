@@ -477,7 +477,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
             return pts.map((pt, i) => (
               <mesh key={`preview_${i}`} position={pt}>
                 <boxGeometry args={[buildPreview.size * 0.99, buildPreview.size * 0.99, buildPreview.size * 0.99]} />
-                <meshBasicMaterial color={getStampColor(stampType, pt[0], pt[1], pt[2])} transparent opacity={0.6} />
+                <PlasticMaterial color={getStampColor(stampType, pt[0], pt[1], pt[2])} transparent opacity={0.6} hasBlockOutline={false} />
               </mesh>
             ));
           })()}
@@ -527,7 +527,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
           }}
         >
           <planeGeometry args={[10000, 10000]} />
-          <meshBasicMaterial transparent opacity={0.0} color="#ff0000" />
+          <meshBasicMaterial transparent opacity={0.0} color="#ff0000" depthWrite={false} />
         </mesh>
       )}
 

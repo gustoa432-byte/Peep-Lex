@@ -34,6 +34,7 @@ export class CoreCharacterController {
 
   private floorY = 0;
   private lastAppMode = 'editor';
+  private lastRoomEditorMode = 'view';
 
   // Web Worker for Grid Collisions
   private worker: Worker | null = null;
@@ -98,13 +99,17 @@ export class CoreCharacterController {
     const store = useStore.getState();
     const { appMode, roomEditorMode, isFirstPerson, cameraSpeed, isCrouching, jumpTrigger, roomObjects, podiumPosition, devSettings, isPlayingAnimation, isPlayingLoops, isAnimationMenuOpen, editingLoopId } = store;
     
-    if (appMode !== this.lastAppMode) {
-      if ((appMode === 'room' || appMode === 'world' || appMode === 'parkour') && this.lastAppMode === 'editor') {
+    if (appMode !== this.lastAppMode || roomEditorMode !== this.lastRoomEditorMode) {
+      if (
+        ((appMode === 'room' || appMode === 'world' || appMode === 'parkour') && this.lastAppMode === 'editor') ||
+        (appMode === 'roomEditor' && roomEditorMode === 'voxel' && this.lastRoomEditorMode !== 'voxel')
+      ) {
         this.yaw = 0;
-        this.pitch = 0.2;
+        this.pitch = 0.05; // Slightly lower than horizon (0 is flat horizon)
         this.visualQuaternion.setFromAxisAngle(UP_VECTOR, Math.PI);
       }
       this.lastAppMode = appMode;
+      this.lastRoomEditorMode = roomEditorMode;
     }
     
     const { move, look } = inputState;
@@ -303,8 +308,7 @@ export class CoreCharacterController {
     if (nowSync - this.lastSyncTime >= 33) {
       this.lastSyncTime = nowSync;
       const isMainHub = !isAnimationMenuOpen && !isPlayingLoops && editingLoopId === null;
-      const activeSettings = (isPlayingAnimation || isPlayingLoops) ? activePoseRef.current : devSettings;
-      const currentDevSettings = isMainHub ? defaultDevSettings : activeSettings;
+      const currentDevSettings = defaultDevSettings;
       
       MultiplayerService.sendPlayerState({
         position: this.position,
@@ -386,13 +390,13 @@ export class CoreCharacterController {
   private updateCamera(dt: number, isFirstPerson: boolean, isRoomOrVoxel: boolean, roomEditorMode: string | undefined, roomObjects: any[], devSettings: any) {
     const targetPos = this.position.clone();
     
-    let headHeight = 8.1;
-    if (isFirstPerson && isRoomOrVoxel && roomEditorMode === 'voxel') {
-        headHeight = 4.0;
-    }
+    let headHeight = 8.1; // Default head height
+    // (removed 4.0 override for voxel)
+
     targetPos.y += headHeight;
 
     if (isFirstPerson) {
+        // slightly angle down towards the horizon
         const lookQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ'));
         const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(lookQuat); // Look forward in local space
         

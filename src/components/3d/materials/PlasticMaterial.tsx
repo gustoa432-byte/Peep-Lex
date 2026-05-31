@@ -432,6 +432,7 @@ interface PlasticMaterialProps {
   outlineThickness?: number;
   hasBlockOutline?: boolean;
   attach?: string;
+  vertexColors?: boolean;
 }
 
 export const PlasticMaterial: React.FC<PlasticMaterialProps> = ({ 
@@ -443,7 +444,8 @@ export const PlasticMaterial: React.FC<PlasticMaterialProps> = ({
   pulse = false,
   outlineThickness = 0.05,
   hasBlockOutline = false,
-  attach
+  attach,
+  vertexColors = false
 }) => {
   const materialRef = useRef<THREE.MeshLambertMaterial>(null);
   
@@ -607,6 +609,7 @@ export const PlasticMaterial: React.FC<PlasticMaterialProps> = ({
         opacity={opacity}
         map={hasBlockOutline ? blockOutlineTexture : (processColor.map || null)}
         onBeforeCompile={handleBeforeCompile}
+        vertexColors={vertexColors}
       />
       {/* Outlines from drei occasionally crash with R3F 9 context, using internal shaders or inverted hulls is safer */}
     </>
