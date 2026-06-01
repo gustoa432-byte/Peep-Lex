@@ -13,7 +13,7 @@ export const SceneViewer: React.FC = () => {
   const showStats = useStore(state => state.showStats);
 
   return (
-    <div className="w-full h-full bg-[#111216]">
+    <div className="w-full h-full bg-[#111216]" onContextMenu={(e) => e.preventDefault()}>
       <Canvas 
         camera={{ fov: 75, near: 0.1, far: 30000 }}
         dpr={[1, 2]} 

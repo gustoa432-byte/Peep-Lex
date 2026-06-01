@@ -43,6 +43,8 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
   const buildLayer = useStore(state => state.buildLayer);
   const setPodiumPosition = useStore(state => state.setPodiumPosition);
   const podiumPosition = useStore(state => state.podiumPosition);
+  const setRoomBlockSize = useStore(state => state.setRoomBlockSize);
+  const setRoomSelectedStamp = useStore(state => state.setRoomSelectedStamp);
   
   const brushShape = useStore(state => state.brushShape);
   const brushHeight = useStore(state => state.brushHeight);
@@ -89,6 +91,31 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointercancel', handlePointerUp);
     };
+  }, []);
+
+  React.useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const state = useStore.getState();
+      if (state.appMode !== 'roomEditor') return;
+      if (state.roomEditorMode !== 'build' && state.roomEditorMode !== 'voxel') return;
+      
+      const sizes = [1, 2, 4];
+      const currentSize = state.roomBlockSize;
+      const currentIndex = sizes.indexOf(currentSize);
+      
+      if (e.deltaY < 0) {
+        // Scroll up -> bigger
+        const nextIndex = Math.min(sizes.length - 1, currentIndex + 1);
+        if (nextIndex !== currentIndex) state.setRoomBlockSize(sizes[nextIndex]);
+      } else if (e.deltaY > 0) {
+        // Scroll down -> smaller
+        const nextIndex = Math.max(0, currentIndex - 1);
+        if (nextIndex !== currentIndex) state.setRoomBlockSize(sizes[nextIndex]);
+      }
+    };
+    
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
   }, []);
 
   const [dragState, setDragState] = useState<{ target: string, offset: THREE.Vector3 } | null>(null);
@@ -379,6 +406,57 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
 
     if (roomEditorMode !== 'build' && roomEditorMode !== 'voxel') return;
     
+    const isDesktopBuilder = document.pointerLockElement !== null || e.pointerType === 'mouse';
+
+    // Desktop shortcuts override selected tool
+    if (isDesktopBuilder) {
+      if (e.altKey) {
+        useStore.getState().setIsBuildingActive(true);
+        useStore.getState().setIsErasing(true); // Start continuous erasing
+        if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
+          e.stopPropagation();
+          useStore.getState().setRoomObjects(useStore.getState().roomObjects.filter((o) => o.id !== objectId));
+        }
+        return;
+      } else if (e.button === 0) {
+         if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
+             e.stopPropagation();
+             const currentObjects = useStore.getState().roomObjects;
+             const clickedObj = currentObjects.find(o => o.id === objectId);
+             if (clickedObj) {
+                setRoomSelectedStamp(clickedObj.type);
+             }
+         }
+         return; // prevent default stamp/build handling for left click
+      } else if (e.button === 2) {
+          if (objectId === 'podium') return; 
+          e.stopPropagation();
+          useStore.getState().setIsBuildingActive(true);
+          const normal = (objectId && objectId !== 'floor' && objectId !== 'grid' && e.face) ? e.face.normal : new THREE.Vector3(0, 1, 0); 
+          const { x, y, z } = getSnappedPos(e.point, normal, roomBlockSize);
+          
+          const pts = computePreviewBlocks(new THREE.Vector3(x, y, z), new THREE.Vector3(x, y, z), roomBlockSize);
+          const currentObjects = useStore.getState().roomObjects;
+          const newBlocks = [];
+          for (const pt of pts) {
+            if (!isIntersecting(pt[0], pt[1], pt[2], roomBlockSize)) {
+              newBlocks.push({
+                id: generateId(),
+                type: roomSelectedStamp,
+                position: [pt[0], pt[1], pt[2]] as [number, number, number],
+                rotation: [0, 0, 0] as [number, number, number],
+                scale: [roomBlockSize, roomBlockSize, roomBlockSize] as [number, number, number],
+              });
+            }
+          }
+          if (newBlocks.length > 0) {
+            useStore.getState().setRoomObjects([...currentObjects, ...newBlocks]);
+            useStore.getState().commitRoomEditorHistory();
+          }
+          return;
+      }
+    }
+
     if (roomSelectedTool === 'eraser') {
       useStore.getState().setIsBuildingActive(true);
       useStore.getState().setIsErasing(true); // Start continuous erasing
