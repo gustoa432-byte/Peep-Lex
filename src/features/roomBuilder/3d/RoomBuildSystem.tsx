@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { ThreeEvent, useFrame } from '@react-three/fiber';
+import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
 import { useCursor, Grid } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '../../../store/useStore';
@@ -35,6 +35,7 @@ const getStampColor = (type: string, x: number = 0, y: number = 0, z: number = 0
 };
 
 export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<PointerEvent>) => void }> = ({ onPodiumDragStart }) => {
+  const { camera, scene } = useThree();
   const appMode = useStore(state => state.appMode);
   const roomEditorMode = useStore(state => state.roomEditorMode);
   const roomSelectedTool = useStore(state => state.roomSelectedTool);
@@ -135,6 +136,9 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
   const showVideo = !!backgroundVideoUrl && isPlayingLoops;
 
   useFrame((state, delta) => {
+    if (document.pointerLockElement) {
+      state.pointer.set(0, 0);
+    }
     if (textGroupRef.current) {
       textGroupRef.current.rotation.y += delta * 0.2;
     }
@@ -155,9 +159,9 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
     );
 
     const snappedMin = new THREE.Vector3(
-      Math.round(exactMin.x),
-      Math.round(exactMin.y),
-      Math.round(exactMin.z)
+      Math.round(exactMin.x / size) * size,
+      Math.round(exactMin.y / size) * size,
+      Math.round(exactMin.z / size) * size
     );
 
     return {
