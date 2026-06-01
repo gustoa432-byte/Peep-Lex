@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { useStore } from '../../../store/useStore';
-import { Hammer, Eraser, Box } from 'lucide-react';
+import { Hammer, Eraser, Box, Zap, FastForward, Flame, Flag, Lightbulb } from 'lucide-react';
 
 export const stamps = [
   { id: 'block_grass', label: 'Трава', icon: Box, color: '#4ade80' },
@@ -8,6 +8,11 @@ export const stamps = [
   { id: 'block_stone', label: 'Камень', icon: Box, color: '#94a3b8' },
   { id: 'block_wood', label: 'Дерево', icon: Box, color: '#b45309' },
   { id: 'block_brick', label: 'Кирпич', icon: Box, color: '#dc2626' },
+  { id: 'block_light', label: 'Свет', icon: Lightbulb, color: '#fef08a' },
+  { id: 'trigger_jump', label: 'Прыжок', icon: Zap, color: '#facc15' },
+  { id: 'trigger_speed', label: 'Ускорение', icon: FastForward, color: '#0ea5e9' },
+  { id: 'trigger_checkpoint', label: 'Чекпоинт', icon: Flag, color: '#ec4899' },
+  { id: 'trigger_kill', label: 'Смерть (лава)', icon: Flame, color: '#ef4444' },
 ];
 
 export const RadialStampMenu: React.FC<{

@@ -15,6 +15,11 @@ const getStampColor = (type: string, x: number = 0, y: number = 0, z: number = 0
     case 'block_stone': baseColorStr = '#94a3b8'; break;
     case 'block_wood': baseColorStr = '#b45309'; break;
     case 'block_brick': baseColorStr = '#dc2626'; break;
+    case 'trigger_jump': baseColorStr = '#facc15'; break;
+    case 'trigger_speed': baseColorStr = '#0ea5e9'; break;
+    case 'trigger_checkpoint': baseColorStr = '#ec4899'; break;
+    case 'trigger_kill': baseColorStr = '#ef4444'; break;
+    case 'block_light': baseColorStr = '#fef08a'; break;
   }
   
   // Simple spatial noise for variation

@@ -7,16 +7,36 @@ class CoreInputManager {
   constructor() {
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleKeyUp = this.handleKeyUp.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handlePointerLockChange = this.handlePointerLockChange.bind(this);
   }
 
   init() {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
+    document.addEventListener('pointerlockchange', this.handlePointerLockChange);
   }
 
   destroy() {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    document.removeEventListener('pointerlockchange', this.handlePointerLockChange);
+    document.removeEventListener('mousemove', this.handleMouseMove);
+  }
+
+  private handlePointerLockChange() {
+    if (document.pointerLockElement) {
+      document.addEventListener('mousemove', this.handleMouseMove);
+    } else {
+      document.removeEventListener('mousemove', this.handleMouseMove);
+    }
+  }
+
+  private handleMouseMove(e: MouseEvent) {
+    if (document.pointerLockElement) {
+      inputState.mouseDelta.x += e.movementX;
+      inputState.mouseDelta.y += e.movementY;
+    }
   }
 
   private handleKeyDown(e: KeyboardEvent) {

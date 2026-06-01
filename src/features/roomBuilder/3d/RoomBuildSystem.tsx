@@ -17,6 +17,11 @@ const getStampColor = (type: string, x: number = 0, y: number = 0, z: number = 0
       case 'block_stone': baseColorStr = '#94a3b8'; break;
       case 'block_wood': baseColorStr = '#b45309'; break;
       case 'block_brick': baseColorStr = '#dc2626'; break;
+      case 'trigger_jump': baseColorStr = '#facc15'; break;
+      case 'trigger_speed': baseColorStr = '#0ea5e9'; break;
+      case 'trigger_checkpoint': baseColorStr = '#ec4899'; break;
+      case 'trigger_kill': baseColorStr = '#ef4444'; break;
+      case 'block_light': baseColorStr = '#fef08a'; break;
     }
     const hash = Math.sin(x*12.9898 + y*78.233 + z*37.719) * 43758.5453;
     const rand = hash - Math.floor(hash);
@@ -312,6 +317,36 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
   }, [brushShape, brushHeight]);
 
   const handleGenericPointerDown = (e: ThreeEvent<PointerEvent>, objectId?: string) => {
+    // Treat podium as a play/pause button if not editing/moving it
+    if (appMode !== 'roomEditor' || (appMode === 'roomEditor' && roomEditorMode === 'view')) {
+      if (objectId === 'podium') {
+        e.stopPropagation();
+        const state = useStore.getState();
+        const shortsPacks = state.flexPacks.filter(p => !p.isHidden);
+        if (state.isPlayingLoops) {
+          state.setIsPlayingLoops(false);
+        } else {
+          if (shortsPacks.length > 0) {
+            const randomPack = shortsPacks[Math.floor(Math.random() * shortsPacks.length)];
+            state.loadFlexPack(randomPack.id);
+            state.setIsPlayingLoopsOnce(true);
+            state.setIsPlayingLoops(true);
+          } else {
+            state.setIsPlayingLoopsOnce(false);
+            state.setIsPlayingLoops(true);
+          }
+        }
+        return;
+      }
+    }
+
+    // Pointer lock for desktop mouse look
+    if (e.pointerType === 'mouse' && !document.pointerLockElement) {
+       if (appMode === 'world' || appMode === 'room' || appMode === 'parkour' || (appMode === 'roomEditor' && roomEditorMode === 'voxel')) {
+           try { document.body.requestPointerLock?.(); } catch(err){}
+       }
+    }
+
     if (appMode !== 'roomEditor') return;
     
     // Ignore multi-touch to allow OrbitControls camera rotation
@@ -325,7 +360,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
     if (roomEditorMode === 'move') {
       if (objectId === 'podium') {
         useStore.getState().setIsBuildingActive(true);
-        onPodiumDragStart?.(e);
+        handlePodiumExternalDragStart(e);
         return;
       }
       if (objectId && objectId !== 'floor' && objectId !== 'grid') {
@@ -533,6 +568,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
 
       {/* Render Room Objects via Chunked System */}
       <ChunkedRoomBlocks onBlockPointerDown={handleGenericPointerDown} onBlockPointerMove={handleGenericPointerMove} />
+      <BlockLights />
 
       {/* NEW ROOM PODIUM */}
       <group 
@@ -575,3 +611,25 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
     </>
   );
 };
+
+export const BlockLights = React.memo(() => {
+  const roomObjects = useStore(state => state.roomObjects);
+  const lights = React.useMemo(() => roomObjects.filter(b => b.type === 'block_light'), [roomObjects]);
+  
+  if (lights.length === 0) return null;
+
+  return (
+    <group>
+      {lights.slice(0, 16).map(l => (
+        <pointLight 
+          key={`pl_${l.id}`}
+          position={[l.position[0], l.position[1] + 1.0, l.position[2]]}
+          color="#fef08a"
+          intensity={20}
+          distance={50}
+          decay={1.5}
+        />
+      ))}
+    </group>
+  );
+});

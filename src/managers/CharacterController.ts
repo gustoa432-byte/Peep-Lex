@@ -35,6 +35,8 @@ export class CoreCharacterController {
   private floorY = 0;
   private lastAppMode = 'editor';
   private lastRoomEditorMode = 'view';
+  private checkpointPos?: THREE.Vector3;
+  private currentSpeedBoost: number = 0;
 
   // Web Worker for Grid Collisions
   private worker: Worker | null = null;
@@ -198,7 +200,7 @@ export class CoreCharacterController {
     const collisionBlocks = (this.worker && this.isWorkerReady) ? this.nearbyBlocks : roomObjects;
 
     // WORLD / ROOM KINEMATICS
-    // 1. Look Input
+    // 1. Look Input (Joystick)
 
     const rotationSpeed = cameraSpeed * 2.0;
     this.yaw -= (isNaN(look.x) ? 0 : look.x) * rotationSpeed * (isFirstPerson ? 0.3 : 1.0) * dt;
@@ -212,8 +214,25 @@ export class CoreCharacterController {
       this.pitch = Math.max(0.2, Math.min(Math.PI/2 - 0.1, this.pitch));
     }
 
+    // 1b. Look Input (Mouse Delta for Desktop)
+    const { mouseDelta } = inputState;
+    if (mouseDelta.x !== 0 || mouseDelta.y !== 0) {
+      const mouseSens = 0.003;
+      this.yaw -= mouseDelta.x * mouseSens;
+      if (isFirstPerson) {
+        this.pitch -= mouseDelta.y * mouseSens;
+        this.pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.pitch));
+      } else {
+        this.pitch += mouseDelta.y * mouseSens;
+        this.pitch = Math.max(0.2, Math.min(Math.PI/2 - 0.1, this.pitch));
+      }
+      mouseDelta.x = 0;
+      mouseDelta.y = 0;
+    }
+
     // 2. Floor Calculation
     let currentFloorY = -2.0;
+    let highestTrigger: string | null = null;
     if (appMode === 'world') {
       currentFloorY = 0;
     } else if (isRoomOrVoxel) {
@@ -235,7 +254,12 @@ export class CoreCharacterController {
             this.position.z + charRadius > bz - sz && this.position.z - charRadius < bz + sz) {
           const blockTop = by + sy;
           if (this.position.y >= blockTop - 1.2) {
-            currentFloorY = Math.max(currentFloorY, blockTop);
+            if (blockTop > currentFloorY) {
+               currentFloorY = blockTop;
+               highestTrigger = obj.type.startsWith('trigger_') ? obj.type : null;
+            } else if (blockTop === currentFloorY && obj.type.startsWith('trigger_')) {
+               highestTrigger = obj.type;
+            }
           }
         }
       }
@@ -243,9 +267,16 @@ export class CoreCharacterController {
     this.floorY = currentFloorY;
 
     // 3. Gravity and Jump
+    let isBouncing = false;
+    if (highestTrigger === 'trigger_jump' && this.position.y <= this.floorY + 0.2) {
+       this.velocityY = 25; // Super jump bounce!
+       isBouncing = true;
+       // We could add haptic/sound here later
+    }
+
     if (jumpTrigger !== this.lastJumpTrigger) {
       this.lastJumpTrigger = jumpTrigger;
-      if (this.position.y <= this.floorY + 0.1) {
+      if (this.position.y <= this.floorY + 0.1 && !isBouncing) {
         this.velocityY = appMode === 'world' ? 10 : 15;
       }
     }
@@ -258,21 +289,59 @@ export class CoreCharacterController {
       this.velocityY = 0;
     }
 
+    if (highestTrigger === 'trigger_checkpoint') {
+       if (!this.checkpointPos || this.checkpointPos.distanceToSquared(this.position) > 1.0) {
+           this.checkpointPos = this.position.clone();
+           // Optional: could add haptics/sound here for checkpoint 
+       }
+    }
+
     if (this.position.y < -100) {
-      this.teleport(new THREE.Vector3(0, 10, 0));
+      if (this.checkpointPos) {
+        this.teleport(this.checkpointPos);
+      } else {
+        this.teleport(new THREE.Vector3(0, 10, 0));
+      }
+      this.velocityY = 0;
+    }
+
+    if (highestTrigger === 'trigger_speed') {
+       this.currentSpeedBoost = 30; // Max speed boost
+    }
+
+    // Decay speed boost
+    if (this.currentSpeedBoost > 0) {
+       this.currentSpeedBoost = Math.max(0, this.currentSpeedBoost - 20 * dt);
+    }
+
+    if (highestTrigger === 'trigger_kill') {
+      if (this.checkpointPos) {
+        this.teleport(this.checkpointPos);
+      } else {
+        this.teleport(new THREE.Vector3(0, 10, 0));
+      }
+      this.velocityY = 0;
     }
 
     // 4. Movement
     const rawMag = Math.sqrt(move.x * move.x + move.y * move.y);
-    const isMoving = rawMag > 0.1;
+    const isMoving = rawMag > 0.1 || this.currentSpeedBoost > 0;
     this.animation.isMoving = isMoving;
     this.animation.isCrouching = isCrouching;
 
     if (isMoving) {
-      const moveDir = new THREE.Vector3(move.x, 0, move.y).normalize();
+      // If releasing stick but have boost, keep moving mostly forward based on pitch/yaw? Wait, better to just use forward vector if no input.
+      let dirX = move.x;
+      let dirY = move.y;
+      if (rawMag < 0.1 && this.currentSpeedBoost > 0) {
+         dirY = -1; // Default to forward if just boosted and not touching stick
+      }
+
+      const moveDir = new THREE.Vector3(dirX, 0, dirY).normalize();
       moveDir.applyAxisAngle(UP_VECTOR, this.yaw);
 
-      const speed = 15 * Math.min(1, rawMag) * dt;
+      const baseSpeed = 15 * Math.min(1, Math.max(rawMag, 1));
+      const speed = (baseSpeed + this.currentSpeedBoost) * dt;
       const prevX = this.position.x;
       const prevZ = this.position.z;
 

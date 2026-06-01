@@ -108,16 +108,23 @@ const LeftTools = memo(() => {
   );
 });
 
-const RightTools = memo(({ onClearClick }: { onClearClick: () => void }) => {
+const RightTools = memo(({ 
+  onClearClick,
+  isExpanded,
+  onToggleExpand
+}: { 
+  onClearClick: () => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) => {
   const buildLayer = useStore(state => state.buildLayer);
   const setBuildLayer = useStore(state => state.setBuildLayer);
   const brushHeight = useStore(state => state.brushHeight);
   const setBrushHeight = useStore(state => state.setBrushHeight);
-  const [isRightToolsExpanded, setRightToolsExpanded] = useState(false);
 
   return (
     <div className="absolute right-4 bottom-8 flex flex-col items-center justify-end gap-2 pointer-events-auto z-50">
-      {isRightToolsExpanded && (
+      {isExpanded && (
         <>
           <div className="bg-black/80 rounded-full p-2 flex flex-col items-center gap-2 border border-white/10 shadow-lg">
             <button 
@@ -175,10 +182,10 @@ const RightTools = memo(({ onClearClick }: { onClearClick: () => void }) => {
         </>
       )}
       <button
-        onClick={() => setRightToolsExpanded(!isRightToolsExpanded)}
+        onClick={onToggleExpand}
         className="w-12 h-12 mt-2 rounded-full flex items-center justify-center bg-black/80 border border-white/10 shadow-lg text-white hover:bg-black/80 active:scale-95 transition-colors"
       >
-        {isRightToolsExpanded ? <ChevronDown size={24} /> : <ChevronUp size={24} />}
+        {isExpanded ? <ChevronDown size={24} /> : <ChevronUp size={24} />}
       </button>
     </div>
   );
@@ -267,7 +274,7 @@ const VoxelToolsGroup = memo(() => {
        </button>
        
        {isRadialMenuOpen && roomSelectedTool === 'stamp' && (
-         <div className="absolute right-16 bottom-0 flex flex-row gap-2 bg-black/95 p-2 rounded-full border border-white/10 shadow-lg">
+         <div className="absolute right-16 bottom-0 flex flex-row flex-wrap justify-end gap-2 bg-black/95 p-2 rounded-[24px] border border-white/10 shadow-lg w-[240px]">
            {stamps.map((stamp) => (
               <button
                 key={stamp.id}
@@ -291,6 +298,14 @@ export const RoomEditorOverlay: React.FC = memo(() => {
   const roomEditorMode = useStore(state => state.roomEditorMode);
   const setRoomEditorMode = useStore(state => state.setRoomEditorMode);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isLookJoystickActive, setIsLookJoystickActive] = useState(false);
+  const [isRightToolsExpanded, setIsRightToolsExpanded] = useState(false);
+
+  React.useEffect(() => {
+    if (roomEditorMode !== 'build') {
+      setIsRightToolsExpanded(false);
+    }
+  }, [roomEditorMode]);
 
   return (
     <div className="absolute inset-0 pointer-events-none z-40 flex flex-col">
@@ -300,11 +315,15 @@ export const RoomEditorOverlay: React.FC = memo(() => {
       {roomEditorMode === 'build' && (
         <>
           <LeftTools />
-          <RightTools onClearClick={() => setShowClearConfirm(true)} />
+          <RightTools 
+            onClearClick={() => setShowClearConfirm(true)} 
+            isExpanded={isRightToolsExpanded}
+            onToggleExpand={() => setIsRightToolsExpanded(!isRightToolsExpanded)}
+          />
         </>
       )}
 
-      {(roomEditorMode === 'build' || roomEditorMode === 'view' || roomEditorMode === 'move') && (
+      {(roomEditorMode === 'build' || roomEditorMode === 'view' || roomEditorMode === 'move') && !isLookJoystickActive && !isRightToolsExpanded && (
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-auto z-50">
           <button 
             onClick={() => {
@@ -378,6 +397,7 @@ export const RoomEditorOverlay: React.FC = memo(() => {
           <VoxelJoysticks 
             onJump={() => useStore.getState().triggerJump()}
             onCrouch={() => useStore.getState().toggleCrouch()}
+            onLookActiveChange={setIsLookJoystickActive}
           />
           <VoxelToolsGroup />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-50">

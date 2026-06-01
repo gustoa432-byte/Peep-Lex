@@ -6,8 +6,9 @@ import { vibrate } from '../../../lib/haptics';
 export const VoxelJoysticks: React.FC<{
   onJump?: () => void;
   onCrouch?: () => void;
+  onLookActiveChange?: (active: boolean) => void;
   // disableSwipe?: boolean; if we want to disable swipe gestures for jumping/crouching
-}> = ({ onJump, onCrouch }) => {
+}> = ({ onJump, onCrouch, onLookActiveChange }) => {
   const isPlayingLoops = useStore(state => state.isPlayingLoops);
 
   // Left Joystick Logic for Room
@@ -85,6 +86,7 @@ export const VoxelJoysticks: React.FC<{
 
     lookStartRef.current = { x: clientX, y: clientY, time: Date.now() };
     setIsLookActive(true);
+    if (onLookActiveChange) onLookActiveChange(true);
   };
 
   const handleLookPointerMove = (e: React.PointerEvent) => {
@@ -140,6 +142,7 @@ export const VoxelJoysticks: React.FC<{
     inputState.look.x = 0;
     inputState.look.y = 0;
     setIsLookActive(false);
+    if (onLookActiveChange) onLookActiveChange(false);
   };
 
   useEffect(() => {
