@@ -9,7 +9,14 @@ export const VoxelJoysticks: React.FC<{
   onLookActiveChange?: (active: boolean) => void;
   // disableSwipe?: boolean; if we want to disable swipe gestures for jumping/crouching
 }> = ({ onJump, onCrouch, onLookActiveChange }) => {
+  const [isTouch, setIsTouch] = useState(false);
+  useEffect(() => {
+    setIsTouch(window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
+  }, []);
+
   const isPlayingLoops = useStore(state => state.isPlayingLoops);
+
+  if (!isTouch) return null;
 
   // Left Joystick Logic for Room
   const joystickRef = useRef<HTMLDivElement>(null);

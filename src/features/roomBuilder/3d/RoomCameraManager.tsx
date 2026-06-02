@@ -17,7 +17,7 @@ export const RoomCameraManager = () => {
     const isMacro = appMode === 'roomEditor' && roomEditorMode !== 'voxel';
     const isBuildMode = roomEditorMode === 'build';
     // Camera is ONLY fully usable in view/move, not in build mode!
-    const shouldEnableControls = appMode === 'roomEditor' && (roomEditorMode === 'view' || roomEditorMode === 'move');
+    const shouldEnableControls = appMode === 'roomEditor' && (roomEditorMode === 'view' || roomEditorMode === 'move' || roomEditorMode === 'build');
     const isEnabled = shouldEnableControls && !isBuildingActive;
 
     const isMacroRef = React.useRef<boolean>(isMacro);
@@ -89,6 +89,11 @@ export const RoomCameraManager = () => {
             minDistance={5}
             maxDistance={150}
             enabled={isEnabled}
+            mouseButtons={{
+                LEFT: THREE.MOUSE.NONE,
+                MIDDLE: THREE.MOUSE.PAN,
+                RIGHT: THREE.MOUSE.ROTATE
+            }}
         />
     );
 };
