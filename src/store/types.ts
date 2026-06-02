@@ -173,7 +173,7 @@ export interface RoomObject {
 }
 
 export type RoomEditorMode = 'build' | 'view' | 'move' | 'voxel';
-export type RoomEditorTool = 'stamp' | 'eraser';
+export type RoomEditorTool = 'stamp' | 'eraser' | 'grab';
 
 export interface FlexPack {
   id: string;
@@ -308,6 +308,8 @@ export interface AppState {
   setIsErasing: (val: boolean) => void;
   isBuildingActive: boolean;
   setIsBuildingActive: (val: boolean) => void;
+  isVoxelMenuOpen: boolean;
+  setIsVoxelMenuOpen: (val: boolean) => void;
 
   roomObjects: RoomObject[];
   setRoomObjects: (objects: RoomObject[]) => void;
@@ -328,6 +330,9 @@ export interface AppState {
 
   roomSelectedTool: RoomEditorTool;
   setRoomSelectedTool: (tool: RoomEditorTool) => void;
+
+  grabbedBlock: RoomObject | null;
+  setGrabbedBlock: (block: RoomObject | null) => void;
 
   roomSelectedStamp: string;
   setRoomSelectedStamp: (stamp: string) => void;

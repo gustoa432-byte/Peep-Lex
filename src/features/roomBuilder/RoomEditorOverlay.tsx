@@ -3,7 +3,7 @@ import { useStore } from '../../store/useStore';
 import { RoomEditorTopBar } from './ui/RoomEditorTopBar';
 import { RadialStampMenu, stamps } from './ui/RadialStampMenu';
 import { VoxelJoysticks } from './ui/VoxelJoysticks';
-import { Eye, Hammer, Trash, Move, ArrowUp, ArrowDown, Layers, MousePointer2, Minus, Square, ChevronUp, ChevronDown, Eraser, Box, TrendingUp, Triangle, Frame } from 'lucide-react';
+import { Eye, Hammer, Trash, Move, ArrowUp, ArrowDown, Layers, MousePointer2, Minus, Square, ChevronUp, ChevronDown, Eraser, Box, TrendingUp, Triangle, Frame, Hand } from 'lucide-react';
 
 const LeftTools = memo(() => {
   const roomEditorMode = useStore(state => state.roomEditorMode);
@@ -215,7 +215,8 @@ const VoxelToolsGroup = memo(() => {
   const setRoomSelectedStamp = useStore(state => state.setRoomSelectedStamp);
   const roomBlockSize = useStore(state => state.roomBlockSize);
   const setRoomBlockSize = useStore(state => state.setRoomBlockSize);
-  const [isRadialMenuOpen, setRadialMenuOpen] = useState(false);
+  const isVoxelMenuOpen = useStore(state => state.isVoxelMenuOpen);
+  const setIsVoxelMenuOpen = useStore(state => state.setIsVoxelMenuOpen);
   const [isSizeMenuOpen, setSizeMenuOpen] = useState(false);
 
   return (
@@ -249,6 +250,13 @@ const VoxelToolsGroup = memo(() => {
        </button>
 
        <button
+          onClick={() => setRoomSelectedTool(roomSelectedTool === 'grab' ? 'stamp' : 'grab')}
+          className={`w-14 h-14 rounded-full flex items-center justify-center bg-black/95 ${roomSelectedTool === 'grab' ? 'border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border border-white/10'}`}
+       >
+          <Hand size={24} className="text-white" />
+       </button>
+
+       <button
           onClick={() => setRoomSelectedTool('eraser')}
           className={`w-14 h-14 rounded-full flex items-center justify-center bg-black/95 ${roomSelectedTool === 'eraser' ? 'border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'border border-white/10'}`}
        >
@@ -258,7 +266,7 @@ const VoxelToolsGroup = memo(() => {
        <button
           onClick={() => {
              if (roomSelectedTool === 'stamp') {
-                setRadialMenuOpen(!isRadialMenuOpen);
+                setIsVoxelMenuOpen(!isVoxelMenuOpen);
              } else {
                 setRoomSelectedTool('stamp');
              }
@@ -273,14 +281,14 @@ const VoxelToolsGroup = memo(() => {
           )}
        </button>
        
-       {isRadialMenuOpen && roomSelectedTool === 'stamp' && (
+       {isVoxelMenuOpen && roomSelectedTool === 'stamp' && (
          <div className="absolute right-16 bottom-0 flex flex-row flex-wrap justify-end gap-2 bg-black/95 p-2 rounded-[24px] border border-white/10 shadow-lg w-[240px]">
            {stamps.map((stamp) => (
               <button
                 key={stamp.id}
                 onClick={() => {
                   setRoomSelectedStamp(stamp.id);
-                  setRadialMenuOpen(false);
+                  setIsVoxelMenuOpen(false);
                 }}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform ${roomSelectedStamp === stamp.id ? 'border-2 border-white scale-110' : 'border border-white/10 scale-100 hover:scale-105'}`}
                 style={{ backgroundColor: stamp.color }}

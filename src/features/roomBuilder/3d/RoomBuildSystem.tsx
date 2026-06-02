@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { ThreeEvent, useFrame, useThree } from '@react-three/fiber';
-import { useCursor, Grid } from '@react-three/drei';
+import { useCursor } from '@react-three/drei';
 import * as THREE from 'three';
 import { useStore } from '../../../store/useStore';
 import { ChunkedRoomBlocks } from './ChunkedRoomBlocks';
@@ -120,6 +120,8 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
   }, []);
 
   const [dragState, setDragState] = useState<{ target: string, offset: THREE.Vector3 } | null>(null);
+  const [grabPreviewPos, setGrabPreviewPos] = useState<THREE.Vector3 | null>(null);
+  const grabbedBlock = useStore(state => state.grabbedBlock);
   
   const [buildPreview, setBuildPreview] = useState<{
     start: THREE.Vector3;
@@ -422,46 +424,48 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
           useStore.getState().setRoomObjects(useStore.getState().roomObjects.filter((o) => o.id !== objectId));
         }
         return;
-      } else if (e.button === 0) {
-         if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
-             e.stopPropagation();
-             const currentObjects = useStore.getState().roomObjects;
-             const clickedObj = currentObjects.find(o => o.id === objectId);
-             if (clickedObj) {
-                setRoomSelectedStamp(clickedObj.type);
-             }
-         }
-         return; // prevent default stamp/build handling for left click
       } else if (e.button === 2) {
-          if (objectId === 'podium') return; 
           e.stopPropagation();
-          useStore.getState().setIsBuildingActive(true);
-          const normal = (objectId && objectId !== 'floor' && objectId !== 'grid' && e.face) ? e.face.normal : new THREE.Vector3(0, 1, 0); 
-          const { x, y, z } = getSnappedPos(e.point, normal, roomBlockSize);
-          
-          const pts = computePreviewBlocks(new THREE.Vector3(x, y, z), new THREE.Vector3(x, y, z), roomBlockSize);
-          const currentObjects = useStore.getState().roomObjects;
-          const newBlocks = [];
-          for (const pt of pts) {
-            if (!isIntersecting(pt[0], pt[1], pt[2], roomBlockSize)) {
-              newBlocks.push({
-                id: generateId(),
-                type: roomSelectedStamp,
-                position: [pt[0], pt[1], pt[2]] as [number, number, number],
-                rotation: [0, 0, 0] as [number, number, number],
-                scale: [roomBlockSize, roomBlockSize, roomBlockSize] as [number, number, number],
-              });
-            }
-          }
-          if (newBlocks.length > 0) {
-            useStore.getState().setRoomObjects([...currentObjects, ...newBlocks]);
-            useStore.getState().commitRoomEditorHistory();
-          }
+          try { document.exitPointerLock?.(); } catch(err){}
+          const state = useStore.getState();
+          state.setIsVoxelMenuOpen(!state.isVoxelMenuOpen);
           return;
       }
     }
+    
+    // Tools logic (desktop left click falls through to here)
+    if (roomSelectedTool === 'grab') {
+      if (e.button !== 0 && isDesktopBuilder) return; // Only allow left click for tools
+      e.stopPropagation();
+      const state = useStore.getState();
+      if (state.grabbedBlock) {
+          // Place the block
+          const normal = (objectId && objectId !== 'floor' && objectId !== 'grid' && e.face) ? e.face.normal : new THREE.Vector3(0, 1, 0);
+          const { x, y, z } = getSnappedPos(e.point, normal, state.grabbedBlock.scale[0]);
+          const newBlock = { ...state.grabbedBlock, position: [x, y, z] as [number, number, number] };
+          state.setRoomObjects([...state.roomObjects, newBlock]);
+          state.setGrabbedBlock(null);
+          setGrabPreviewPos(null);
+          state.commitRoomEditorHistory();
+      } else {
+          // Pick up block
+          if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
+             const block = state.roomObjects.find(o => o.id === objectId);
+             if (block) {
+                state.setRoomObjects(state.roomObjects.filter(o => o.id !== objectId));
+                state.setGrabbedBlock(block);
+                
+                const normal = e.face ? e.face.normal : new THREE.Vector3(0, 1, 0);
+                const { x, y, z } = getSnappedPos(e.point, normal, block.scale[0]);
+                setGrabPreviewPos(new THREE.Vector3(x, y, z));
+             }
+          }
+      }
+      return;
+    }
 
     if (roomSelectedTool === 'eraser') {
+      if (e.button !== 0 && isDesktopBuilder) return;
       useStore.getState().setIsBuildingActive(true);
       useStore.getState().setIsErasing(true); // Start continuous erasing
       if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
@@ -472,6 +476,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
     }
     
     if (roomSelectedTool === 'stamp') {
+      if (e.button !== 0 && isDesktopBuilder) return;
       if (objectId === 'podium') return; // Ignore clicking podium when building
       e.stopPropagation();
       useStore.getState().setIsBuildingActive(true);
@@ -490,6 +495,15 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
 
   const handleGenericPointerMove = (e: ThreeEvent<PointerEvent>, objectId?: string) => {
     if (appMode !== 'roomEditor') return;
+    
+    if (roomSelectedTool === 'grab' && grabbedBlock) {
+       e.stopPropagation();
+       const normal = (objectId && objectId !== 'floor' && objectId !== 'grid' && e.face) ? e.face.normal : new THREE.Vector3(0, 1, 0);
+       const { x, y, z } = getSnappedPos(e.point, normal, grabbedBlock.scale[0]);
+       setGrabPreviewPos(new THREE.Vector3(x, y, z));
+       return;
+    }
+
     if (roomEditorMode === 'build' && roomSelectedTool === 'eraser' && useStore.getState().isErasing) {
       if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
         const currentObjects = useStore.getState().roomObjects;
@@ -524,15 +538,6 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
     <>
       {appMode === 'roomEditor' ? (
         <>
-          <Grid 
-            infiniteGrid 
-            fadeDistance={200} 
-            fadeStrength={5} 
-            cellColor="#22c55e" 
-            sectionColor="#15803d" 
-            sectionSize={2} 
-            position={[0, buildY, 0]} 
-          />
           {(roomEditorMode === 'build' || roomEditorMode === 'voxel') && (
             <mesh 
                position={[0, buildY, 0]} 
@@ -546,6 +551,16 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
           )}
         </>
       ) : null}
+
+      {/* Grabbed Block Preview */}
+      {grabbedBlock && grabPreviewPos && (
+        <group pointerEvents="none">
+          <mesh position={grabPreviewPos}>
+            <boxGeometry args={[grabbedBlock.scale[0], grabbedBlock.scale[1], grabbedBlock.scale[2]]} />
+            <meshBasicMaterial color={getStampColor(grabbedBlock.type)} transparent opacity={0.5} depthWrite={false} />
+          </mesh>
+        </group>
+      )}
 
       {/* Preview Interaction Plane */}
       {buildPreview && (

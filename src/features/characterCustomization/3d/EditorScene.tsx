@@ -12,21 +12,13 @@ import { ApiService } from '../../../services/ApiService';
 import { BackgroundVideoProjector } from '../../../components/3d/BackgroundVideoProjector';
 import { getGlobalAudioContext, getGlobalAudioPannerNode } from '../../../components/audio/GlobalAudioPlayer';
 
-const SceneBackground = ({ bgUrl, bgSphereY, bgSphereRotY }: { bgUrl: string, bgSphereY: number, bgSphereRotY: number }) => {
-  const bgTexture = useTexture(bgUrl);
-  const envMap = React.useMemo(() => {
-    if (!bgTexture) return null;
-    const tex = bgTexture.clone();
-    tex.mapping = THREE.EquirectangularReflectionMapping;
-    return tex;
-  }, [bgTexture]);
-
+const SceneBackground = ({ bgSphereY, bgSphereRotY }: { bgSphereY: number, bgSphereRotY: number }) => {
   return (
     <>
-      {envMap && <Environment map={envMap} />}
+      <Environment preset="city" />
       <mesh position={[0, bgSphereY, 0]} scale={[-1, 0.6, 1]} rotation={[0, (Math.PI / -2) + bgSphereRotY, 0]}>
         <sphereGeometry args={[15, 64, 40]} />
-        <meshBasicMaterial map={bgTexture} side={THREE.BackSide} />
+        <meshBasicMaterial color="#1f2229" side={THREE.BackSide} />
       </mesh>
     </>
   );
@@ -140,14 +132,6 @@ export const EditorScene: React.FC = () => {
   })));
   const showVideo = backgroundVideoUrl && (isAnimationMenuOpen || isPlayingLoops);
 
-  const [bgUrl, setBgUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    ApiService.getMediaPublicUrl('bg_img', '8992.webp').then(url => {
-        if (url) setBgUrl(url);
-    });
-  }, []);
-
   useFrame(({ camera }) => {
     const panner = getGlobalAudioPannerNode();
     if (panner) {
@@ -176,7 +160,7 @@ export const EditorScene: React.FC = () => {
     <group>
       <PerspectiveCamera makeDefault position={[0, 2.5, 5.5]} fov={45} />
 
-      {bgUrl && <SceneBackground bgUrl={bgUrl} bgSphereY={bgSphereY} bgSphereRotY={bgSphereRotY} />}
+      <SceneBackground bgSphereY={bgSphereY} bgSphereRotY={bgSphereRotY} />
       
       <StageLights />
 

@@ -8,6 +8,8 @@ export const createRoomEditorSlice = (set: any) => ({
   setIsErasing: (val: boolean) => set({ isErasing: val }),
   isBuildingActive: false,
   setIsBuildingActive: (val: boolean) => set({ isBuildingActive: val }),
+  isVoxelMenuOpen: false,
+  setIsVoxelMenuOpen: (val: boolean) => set({ isVoxelMenuOpen: val }),
 
   roomObjects: [] as RoomObject[],
   setRoomObjects: (objects: RoomObject[]) => set({ roomObjects: objects }),
@@ -75,7 +77,10 @@ export const createRoomEditorSlice = (set: any) => ({
   }),
 
   roomSelectedTool: 'stamp' as RoomEditorTool,
-  setRoomSelectedTool: (tool: RoomEditorTool) => set({ roomSelectedTool: tool }),
+  setRoomSelectedTool: (tool: RoomEditorTool) => set({ roomSelectedTool: tool, grabbedBlock: null }),
+
+  grabbedBlock: null as RoomObject | null,
+  setGrabbedBlock: (block: RoomObject | null) => set({ grabbedBlock: block }),
 
   roomSelectedStamp: 'house',
   setRoomSelectedStamp: (stamp: string) => set({ roomSelectedStamp: stamp }),

@@ -233,6 +233,7 @@ export class CoreCharacterController {
     // 2. Floor Calculation
     let currentFloorY = -2.0;
     let highestTrigger: string | null = null;
+    let touchedTrigger: string | null = null;
     if (appMode === 'world') {
       currentFloorY = 0;
     } else if (isRoomOrVoxel) {
@@ -252,7 +253,18 @@ export class CoreCharacterController {
         
         if (this.position.x + charRadius > bx - sx && this.position.x - charRadius < bx + sx &&
             this.position.z + charRadius > bz - sz && this.position.z - charRadius < bz + sz) {
+            
           const blockTop = by + sy;
+          const blockBottom = by - sy;
+          const charBottom = this.position.y;
+          const charTop = this.position.y + 2.0;
+
+          if (charTop > blockBottom && charBottom < blockTop) {
+             if (obj.type.startsWith('trigger_')) {
+                 touchedTrigger = obj.type;
+             }
+          }
+
           if (this.position.y >= blockTop - 1.2) {
             if (blockTop > currentFloorY) {
                currentFloorY = blockTop;
@@ -265,10 +277,15 @@ export class CoreCharacterController {
       }
     }
     this.floorY = currentFloorY;
+    
+    let activeTrigger = touchedTrigger;
+    if (!activeTrigger && highestTrigger && this.position.y <= this.floorY + 0.2) {
+        activeTrigger = highestTrigger;
+    }
 
     // 3. Gravity and Jump
     let isBouncing = false;
-    if (highestTrigger === 'trigger_jump' && this.position.y <= this.floorY + 0.2) {
+    if (activeTrigger === 'trigger_jump' && this.position.y <= this.floorY + 0.2) {
        this.velocityY = 25; // Super jump bounce!
        isBouncing = true;
        // We could add haptic/sound here later
@@ -289,7 +306,7 @@ export class CoreCharacterController {
       this.velocityY = 0;
     }
 
-    if (highestTrigger === 'trigger_checkpoint') {
+    if (activeTrigger === 'trigger_checkpoint') {
        if (!this.checkpointPos || this.checkpointPos.distanceToSquared(this.position) > 1.0) {
            this.checkpointPos = this.position.clone();
            // Optional: could add haptics/sound here for checkpoint 
@@ -305,7 +322,7 @@ export class CoreCharacterController {
       this.velocityY = 0;
     }
 
-    if (highestTrigger === 'trigger_speed') {
+    if (activeTrigger === 'trigger_speed') {
        this.currentSpeedBoost = 30; // Max speed boost
     }
 
@@ -314,7 +331,7 @@ export class CoreCharacterController {
        this.currentSpeedBoost = Math.max(0, this.currentSpeedBoost - 20 * dt);
     }
 
-    if (highestTrigger === 'trigger_kill') {
+    if (activeTrigger === 'trigger_kill') {
       if (this.checkpointPos) {
         this.teleport(this.checkpointPos);
       } else {
