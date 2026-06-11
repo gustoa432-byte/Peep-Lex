@@ -355,7 +355,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
       if (objectId === 'podium') {
         e.stopPropagation();
         const state = useStore.getState();
-        const shortsPacks = state.flexPacks.filter(p => !p.isHidden);
+        const shortsPacks = state.flexPacks;
         if (state.isPlayingLoops) {
           state.setIsPlayingLoops(false);
         } else {
@@ -556,7 +556,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
 
       {/* Grabbed Block Preview */}
       {grabbedBlock && grabPreviewPos && (
-        <group pointerEvents="none">
+        <group>
           <mesh position={grabPreviewPos}>
             <boxGeometry args={[grabbedBlock.scale[0], grabbedBlock.scale[1], grabbedBlock.scale[2]]} />
             <meshBasicMaterial color={getStampColor(grabbedBlock.type)} transparent opacity={0.5} depthWrite={false} />

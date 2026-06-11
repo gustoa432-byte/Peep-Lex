@@ -90,7 +90,7 @@ export const RoomCameraManager = () => {
             maxDistance={50000}
             enabled={isEnabled}
             mouseButtons={{
-                LEFT: THREE.MOUSE.NONE,
+                LEFT: undefined as any,
                 MIDDLE: THREE.MOUSE.PAN,
                 RIGHT: THREE.MOUSE.ROTATE
             }}
