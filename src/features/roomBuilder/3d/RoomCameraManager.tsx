@@ -87,7 +87,7 @@ export const RoomCameraManager = () => {
             makeDefault 
             maxPolarAngle={Math.PI / 2 - 0.1}
             minDistance={5}
-            maxDistance={150}
+            maxDistance={50000}
             enabled={isEnabled}
             mouseButtons={{
                 LEFT: THREE.MOUSE.NONE,

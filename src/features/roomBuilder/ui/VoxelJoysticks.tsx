@@ -16,8 +16,6 @@ export const VoxelJoysticks: React.FC<{
 
   const isPlayingLoops = useStore(state => state.isPlayingLoops);
 
-  if (!isTouch) return null;
-
   // Left Joystick Logic for Room
   const joystickRef = useRef<HTMLDivElement>(null);
   const joystickKnobRef = useRef<HTMLDivElement>(null);
@@ -160,6 +158,8 @@ export const VoxelJoysticks: React.FC<{
       inputState.look.y = 0;
     };
   }, []);
+
+  if (!isTouch) return null;
 
   return (
     <>

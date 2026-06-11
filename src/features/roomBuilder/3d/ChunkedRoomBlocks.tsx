@@ -65,7 +65,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
       lastCheckTime.current = clock.elapsedTime;
       // Determine near (interactive) vs far (decorative)
       const dist = camera.position.distanceTo(chunkCenter);
-      const shouldBeNear = dist < 200; // 200 units threshold
+      const shouldBeNear = dist < 50000; // Allow infinite interactive distance
       if (shouldBeNear !== isNearRef.current) {
         isNearRef.current = shouldBeNear;
         setLod(shouldBeNear ? 'near' : 'far');

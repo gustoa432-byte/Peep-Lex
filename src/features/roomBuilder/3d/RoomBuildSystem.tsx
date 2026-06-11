@@ -425,10 +425,12 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
         }
         return;
       } else if (e.button === 2) {
-          e.stopPropagation();
-          try { document.exitPointerLock?.(); } catch(err){}
-          const state = useStore.getState();
-          state.setIsVoxelMenuOpen(!state.isVoxelMenuOpen);
+          if (roomEditorMode === 'voxel') {
+              e.stopPropagation();
+              try { document.exitPointerLock?.(); } catch(err){}
+              const state = useStore.getState();
+              state.setIsVoxelMenuOpen(!state.isVoxelMenuOpen);
+          }
           return;
       }
     }
@@ -545,7 +547,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
                onPointerDown={(e) => handleGenericPointerDown(e, 'grid')}
                visible={true}
             >
-              <planeGeometry args={[2100, 2100]} />
+              <planeGeometry args={[100000, 100000]} />
               <meshBasicMaterial transparent opacity={0.0} depthWrite={false} color="#ffffff" side={THREE.DoubleSide} />
             </mesh>
           )}
