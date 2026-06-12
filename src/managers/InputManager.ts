@@ -9,12 +9,14 @@ class CoreInputManager {
     this.handleKeyUp = this.handleKeyUp.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handlePointerLockChange = this.handlePointerLockChange.bind(this);
+    this.handleMouseDown = this.handleMouseDown.bind(this);
   }
 
   init() {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
     document.addEventListener('pointerlockchange', this.handlePointerLockChange);
+    document.addEventListener('mousedown', this.handleMouseDown);
   }
 
   destroy() {
@@ -22,6 +24,16 @@ class CoreInputManager {
     window.removeEventListener('keyup', this.handleKeyUp);
     document.removeEventListener('pointerlockchange', this.handlePointerLockChange);
     document.removeEventListener('mousemove', this.handleMouseMove);
+    document.removeEventListener('mousedown', this.handleMouseDown);
+  }
+
+  private handleMouseDown(e: MouseEvent) {
+    if (e.target instanceof HTMLCanvasElement && e.button !== 2 && !document.pointerLockElement) {
+        const state = useStore.getState();
+        if (state.appMode === 'world' || state.appMode === 'room' || state.appMode === 'parkour' || (state.appMode === 'roomEditor' && state.roomEditorMode === 'voxel')) {
+            try { document.body.requestPointerLock?.(); } catch(err){}
+        }
+    }
   }
 
   private handlePointerLockChange() {

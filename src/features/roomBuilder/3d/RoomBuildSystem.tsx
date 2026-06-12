@@ -373,13 +373,7 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
       }
     }
 
-    // Pointer lock for desktop mouse look
-    if (e.pointerType === 'mouse' && !document.pointerLockElement) {
-       if (appMode === 'world' || appMode === 'room' || appMode === 'parkour' || (appMode === 'roomEditor' && roomEditorMode === 'voxel')) {
-           try { document.body.requestPointerLock?.(); } catch(err){}
-       }
-    }
-
+    // Legacy PointerLock code removed here because it's now handled globally in InputManager.ts
     if (appMode !== 'roomEditor') return;
     
     // Ignore multi-touch to allow OrbitControls camera rotation
@@ -427,9 +421,12 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
       } else if (e.button === 2) {
           if (roomEditorMode === 'voxel') {
               e.stopPropagation();
-              try { document.exitPointerLock?.(); } catch(err){}
-              const state = useStore.getState();
-              state.setIsVoxelMenuOpen(!state.isVoxelMenuOpen);
+              // Delete block immediately on right click in voxel mode!
+              if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
+                 const state = useStore.getState();
+                 state.setRoomObjects(state.roomObjects.filter((o) => o.id !== objectId));
+                 state.commitRoomEditorHistory();
+              }
           } else if (roomEditorMode === 'build') {
               if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
                   e.stopPropagation();
@@ -491,6 +488,21 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
       
       const { x, y, z } = getSnappedPos(e.point, normal, roomBlockSize);
       
+      // In voxel mode, left click instantly builds a block! No dragging required.
+      if (roomEditorMode === 'voxel') {
+        const state = useStore.getState();
+        const newBlock = {
+          id: generateId(),
+          type: state.roomSelectedStamp,
+          position: [x, y, z] as [number, number, number],
+          rotation: [0, 0, 0] as [number, number, number],
+          scale: [roomBlockSize, roomBlockSize, roomBlockSize] as [number, number, number],
+        };
+        state.setRoomObjects([...state.roomObjects, newBlock]);
+        state.commitRoomEditorHistory();
+        return;
+      }
+
       setBuildPreview({
         start: new THREE.Vector3(x, y, z),
         end: new THREE.Vector3(x, y, z),
