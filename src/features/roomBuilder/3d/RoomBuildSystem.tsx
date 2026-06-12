@@ -430,6 +430,11 @@ export const RoomBuildSystem: React.FC<{ onPodiumDragStart?: (e: ThreeEvent<Poin
               try { document.exitPointerLock?.(); } catch(err){}
               const state = useStore.getState();
               state.setIsVoxelMenuOpen(!state.isVoxelMenuOpen);
+          } else if (roomEditorMode === 'build') {
+              if (objectId && objectId !== 'floor' && objectId !== 'grid' && objectId !== 'podium') {
+                  e.stopPropagation();
+                  useStore.getState().setSelectedObjectId(objectId);
+              }
           }
           return;
       }

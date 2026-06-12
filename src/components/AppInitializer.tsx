@@ -8,6 +8,11 @@ export const AppInitializer: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     const initProfile = async () => {
+      // Setup device detection
+      const isTouch = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+      const isTMA = typeof window !== 'undefined' && (window as any).Telegram?.WebApp !== undefined;
+      useStore.setState({ isMobile: isTouch || isTMA });
+
       try {
         let deviceId = localStorage.getItem('peep_device_id');
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

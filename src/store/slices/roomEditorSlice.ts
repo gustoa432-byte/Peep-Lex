@@ -17,6 +17,18 @@ export const createRoomEditorSlice = (set: any) => ({
   roomChunks: {},
   setRoomChunks: (chunks: Record<string, RoomObject[]>) => set({ roomChunks: chunks }),
 
+  selectedObjectId: null as string | null,
+  setSelectedObjectId: (id: string | null) => set({ selectedObjectId: id }),
+  setObjectScript: (id: string, script: string) => set((state: AppState) => {
+    const objIndex = state.roomObjects.findIndex(o => o.id === id);
+    if (objIndex !== -1) {
+      const newObjects = [...state.roomObjects];
+      newObjects[objIndex] = { ...newObjects[objIndex], script };
+      return { roomObjects: newObjects };
+    }
+    return {};
+  }),
+
   roomEditorHistory: [[]] as RoomObject[][],
   roomEditorHistoryIndex: 0,
   

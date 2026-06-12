@@ -1,6 +1,7 @@
 import { AppState, AppMode } from '../types';
 
 export const createAppModeSlice = (set: any, get: any) => ({
+  isMobile: false,
   appMode: 'editor' as AppMode,
   transitionState: 'idle' as 'idle' | 'in' | 'out',
   transitionTargetMode: null as AppMode | null,

@@ -1,9 +1,53 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import { RoomEditorTopBar } from './ui/RoomEditorTopBar';
 import { RadialStampMenu, stamps } from './ui/RadialStampMenu';
 import { VoxelJoysticks } from './ui/VoxelJoysticks';
-import { Eye, Hammer, Trash, Move, ArrowUp, ArrowDown, Layers, MousePointer2, Minus, Square, ChevronUp, ChevronDown, Eraser, Box, TrendingUp, Triangle, Frame, Hand } from 'lucide-react';
+import { Eye, Hammer, Trash, Move, ArrowUp, ArrowDown, Layers, MousePointer2, Minus, Square, ChevronUp, ChevronDown, Eraser, Box, TrendingUp, Triangle, Frame, Hand, Code } from 'lucide-react';
+import Editor from '@monaco-editor/react';
+
+const ScriptEditorPanel = memo(() => {
+  const selectedObjectId = useStore(state => state.selectedObjectId);
+  const roomObjects = useStore(state => state.roomObjects);
+  const setObjectScript = useStore(state => state.setObjectScript);
+  const setSelectedObjectId = useStore(state => state.setSelectedObjectId);
+
+  const selectedObject = roomObjects.find(o => o.id === selectedObjectId);
+  const [code, setCode] = useState('');
+
+  useEffect(() => {
+    if (selectedObject) {
+      setCode(selectedObject.script || `function onUpdate(Peep, dt) {\n  // your code here\n  // if (Peep.Input.moveX > 0) Peep.self.rotateY(dt);\n}`);
+    }
+  }, [selectedObjectId]);
+
+  if (!selectedObject) return null;
+
+  return (
+    <div className="absolute right-4 top-20 w-80 bg-[#111216] border border-white/10 rounded-2xl shadow-xl p-4 pointer-events-auto z-50 flex flex-col gap-3">
+      <div className="flex justify-between items-center">
+        <h3 className="text-white font-medium flex items-center gap-2"><Code size={16} /> Block Script</h3>
+        <button className="text-white/50 hover:text-white" onClick={() => setSelectedObjectId(null)}>x</button>
+      </div>
+      <div className="h-64 rounded bg-black/50 overflow-hidden">
+        <Editor
+          height="100%"
+          defaultLanguage="javascript"
+          theme="vs-dark"
+          value={code}
+          onChange={(val) => setCode(val || '')}
+          options={{ minimap: { enabled: false }, fontSize: 12, tabSize: 2, lineNumbers: 'off' }}
+        />
+      </div>
+      <button 
+        onClick={() => setObjectScript(selectedObjectId, code)}
+        className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-colors"
+      >
+        Save Script
+      </button>
+    </div>
+  );
+});
 
 const LeftTools = memo(() => {
   const roomEditorMode = useStore(state => state.roomEditorMode);
@@ -318,6 +362,7 @@ export const RoomEditorOverlay: React.FC = memo(() => {
   return (
     <div className="absolute inset-0 pointer-events-none z-40 flex flex-col">
       <RoomEditorTopBar />
+      <ScriptEditorPanel />
       <div className="flex-1" />
 
       {roomEditorMode === 'build' && (

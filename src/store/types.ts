@@ -170,6 +170,7 @@ export interface RoomObject {
   position: [number, number, number];
   rotation: [number, number, number];
   scale: [number, number, number];
+  script?: string;
 }
 
 export type RoomEditorMode = 'build' | 'view' | 'move' | 'voxel';
@@ -194,6 +195,9 @@ export interface PlayerState {
 }
 
 export interface AppState {
+  // Basic app info
+  isMobile: boolean;
+  
   // Multiplayer
   otherPlayers: PlayerState[];
   setOtherPlayers: (players: PlayerState[]) => void;
@@ -316,6 +320,10 @@ export interface AppState {
 
   roomChunks: Record<string, RoomObject[]>;
   setRoomChunks: (chunks: Record<string, RoomObject[]>) => void;
+
+  selectedObjectId: string | null;
+  setSelectedObjectId: (id: string | null) => void;
+  setObjectScript: (id: string, script: string) => void;
 
   roomEditorHistory: RoomObject[][];
   roomEditorHistoryIndex: number;

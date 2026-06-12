@@ -4,6 +4,7 @@ import { useStore } from '../../../store/useStore';
 import { PlasticMaterial } from '../../../components/3d/materials/PlasticMaterial';
 import { ThreeEvent, useFrame } from '@react-three/fiber';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { ScriptRunner } from '../../../components/3d/ScriptRunner';
 
 const CHUNK_SIZE = 16;
 
@@ -39,6 +40,35 @@ const getStampColor = (type: string, x: number = 0, y: number = 0, z: number = 0
   return '#' + c.getHexString();
 };
 
+const RoomBlockItem = ({ obj, onPointerDown, onPointerMove }: { obj: any; onPointerDown: (e: ThreeEvent<PointerEvent>, objectId: string) => void; onPointerMove?: (e: ThreeEvent<PointerEvent>, objectId: string) => void }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  
+  return (
+    <>
+      <mesh
+        ref={meshRef}
+        position={obj.position}
+        rotation={obj.rotation}
+        scale={obj.scale}
+        castShadow
+        receiveShadow
+        onPointerDown={(e) => {
+          if (useStore.getState().appMode === 'roomEditor') {
+            e.stopPropagation();
+            useStore.getState().setSelectedObjectId(obj.id);
+          }
+          onPointerDown(e, obj.id);
+        }}
+        onPointerMove={(e) => onPointerMove && onPointerMove(e, obj.id)}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <PlasticMaterial color={getStampColor(obj.type, obj.position[0], obj.position[1], obj.position[2])} hasBlockOutline={true} outlineThickness={0} />
+      </mesh>
+      {obj.script && <ScriptRunner script={obj.script} targetRef={meshRef} />}
+    </>
+  );
+};
+
 const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { chunkId: string, blocks: any[], onPointerDown: (e: ThreeEvent<PointerEvent>, objectId: string) => void, onPointerMove?: (e: ThreeEvent<PointerEvent>, objectId: string) => void }) => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
   
@@ -50,6 +80,10 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
 
   const [lod, setLod] = useState<'near'|'far'>('near');
   const [mergedGeometry, setMergedGeometry] = useState<THREE.BufferGeometry | null>(null);
+
+  // Separate scripted blocks from static blocks
+  const staticBlocks = useMemo(() => blocks.filter(b => !b.script), [blocks]);
+  const scriptedBlocks = useMemo(() => blocks.filter(b => !!b.script), [blocks]);
 
   // Compute center of chunk for LOD distance check
   const chunkCenter = useMemo(() => {
@@ -73,7 +107,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
     }
   });
 
-  const prevBlocksRef = useRef<any[]>(blocks);
+  const prevBlocksRef = useRef<any[]>(staticBlocks);
 
   useEffect(() => {
     // 1. Асинхронно билдим InstancedMesh для ближней зоны
@@ -82,13 +116,13 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
       
       const prevBlocks = prevBlocksRef.current;
       const prevCount = prevBlocks.length;
-      const count = Math.min(blocks.length, instancesCount);
+      const count = Math.min(staticBlocks.length, instancesCount);
 
       let incremental = false;
       if (count > prevCount && count - prevCount <= 20) {
         let same = true;
         for (let i = 0; i < prevCount; i++) {
-            if (prevBlocks[i].id !== blocks[i].id) {
+            if (prevBlocks[i].id !== staticBlocks[i].id) {
                 same = false; break;
             }
         }
@@ -98,7 +132,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
       const startIndex = incremental ? prevCount : 0;
 
       for (let i = startIndex; i < count; i++) {
-        const obj = blocks[i];
+        const obj = staticBlocks[i];
         dummy.position.set(obj.position[0], obj.position[1], obj.position[2]);
         dummy.rotation.set(obj.rotation[0], obj.rotation[1], obj.rotation[2]);
         dummy.scale.set(obj.scale[0], obj.scale[1], obj.scale[2]);
@@ -117,7 +151,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
         meshRef.current.computeBoundingSphere();
       }
       
-      prevBlocksRef.current = blocks;
+      prevBlocksRef.current = staticBlocks;
     };
 
     if ('requestIdleCallback' in window) {
@@ -127,11 +161,11 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
       const handle = setTimeout(buildChunk, 0);
       return () => clearTimeout(handle);
     }
-  }, [blocks, dummy, colorObj]);
+  }, [staticBlocks, dummy, colorObj]);
 
   useEffect(() => {
     // 2. Асинхронно склеиваем BufferGeometry для LOD "far", если перешли в дальнюю зону
-    if (lod === 'far' && !mergedGeometry && blocks.length > 0) {
+    if (lod === 'far' && !mergedGeometry && staticBlocks.length > 0) {
       let cancelled = false;
 
       const buildMergedGeometryFast = () => {
@@ -150,8 +184,8 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
           if (cancelled) return;
           const endTime = performance.now() + 5; // 5ms per frame budget
 
-          while(index < blocks.length && performance.now() < endTime) {
-            const obj = blocks[index];
+          while(index < staticBlocks.length && performance.now() < endTime) {
+            const obj = staticBlocks[index];
             const geo = baseBox.clone();
             
             pos.set(obj.position[0], obj.position[1], obj.position[2]);
@@ -173,7 +207,7 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
             index++;
           }
           
-          if (index < blocks.length) {
+          if (index < staticBlocks.length) {
             requestAnimationFrame(processBatch);
           } else {
             if (geometries.length > 0) {
@@ -191,28 +225,40 @@ const Chunk = React.memo(({ chunkId, blocks, onPointerDown, onPointerMove }: { c
 
       return () => { cancelled = true; };
     }
-  }, [lod, blocks, mergedGeometry]);
+  }, [lod, staticBlocks, mergedGeometry]);
 
   return (
     <group name="chunked-blocks">
+      {lod === 'near' && scriptedBlocks.map((obj) => (
+        <RoomBlockItem 
+          key={obj.id} 
+          obj={obj} 
+          onPointerDown={onPointerDown} 
+          onPointerMove={onPointerMove} 
+        />
+      ))}
       <instancedMesh
         ref={meshRef}
         args={args}
-        count={Math.min(blocks.length, instancesCount)}
+        count={Math.min(staticBlocks.length, instancesCount)}
         castShadow
         receiveShadow
         visible={lod === 'near'}
         onPointerDown={(e) => {
           if (lod === 'near' && e.instanceId !== undefined) {
-            const obj = blocks[e.instanceId];
+            const obj = staticBlocks[e.instanceId];
             if (obj) {
+              if (useStore.getState().appMode === 'roomEditor') {
+                e.stopPropagation();
+                useStore.getState().setSelectedObjectId(obj.id);
+              }
               onPointerDown(e, obj.id);
             }
           }
         }}
         onPointerMove={(e) => {
           if (lod === 'near' && e.instanceId !== undefined && onPointerMove) {
-            const obj = blocks[e.instanceId];
+            const obj = staticBlocks[e.instanceId];
             if (obj) {
               onPointerMove(e, obj.id);
             }
@@ -250,6 +296,7 @@ export const ChunkedRoomBlocks = ({ onBlockPointerDown, onBlockPointerMove }: { 
         isSame = true;
         for (let j = 0; j < newBlocks.length; j++) {
            if (oldBlocks[j].id !== newBlocks[j].id || 
+               oldBlocks[j].script !== newBlocks[j].script || // Also check if script changed!
                oldBlocks[j].position[0] !== newBlocks[j].position[0] ||
                oldBlocks[j].position[1] !== newBlocks[j].position[1] ||
                oldBlocks[j].position[2] !== newBlocks[j].position[2]) {
@@ -275,3 +322,4 @@ export const ChunkedRoomBlocks = ({ onBlockPointerDown, onBlockPointerMove }: { 
     </group>
   );
 };
+
